@@ -426,11 +426,18 @@ class NTRIPHandler:
                     log_debug(f"检测到NTRIP 1.0 HTTP认证格式: {self.client_address}")
                 return
             
-            if protocol_type == "http" and "ntrip" in user_agent and path not in ["/", ""]:
-                self.ntrip_version = "2.0"
-                self.protocol_type = "ntrip2_0"
-                log_debug(f"基于路径检测NTRIP 2.0: {self.client_address}")
-                return
+            # Извлекаем path из request_line для проверки
+            try:
+                request_parts = request_line.split()
+                if len(request_parts) >= 2:
+                    request_path = request_parts[1]
+                    if protocol_type == "http" and "ntrip" in user_agent and request_path not in ["/", ""]:
+                        self.ntrip_version = "2.0"
+                        self.protocol_type = "ntrip2_0"
+                        log_debug(f"基于路径检测NTRIP 2.0: {self.client_address}")
+                        return
+            except Exception:
+                pass  # Игнорируем ошибки парсинга в этом месте
         
         # 检查Ntrip-Version头部字段（NTRIP 2.0特有）
         ntrip_version = headers.get('ntrip-version', '')
@@ -496,7 +503,27 @@ class NTRIPHandler:
 
         if self.protocol_type in ['http', 'ntrip2_0']:
             if 'host' not in headers:
-                return False, "Missing Host header"
+                # Для NTRIP 2.0 автоматически добавляем Host заголовок, если он отсутствует
+                # Это позволяет работать с устройствами, которые не отправляют Host заголовок
+                if self.protocol_type == 'ntrip2_0':
+                    # Используем IP адрес клиента и порт сервера для формирования Host
+                    # Это стандартная практика когда Host заголовок отсутствует
+                    try:
+                        # Получаем порт сервера из сокета
+                        server_port = self.client_socket.getsockname()[1]
+                        # Используем IP адрес клиента (который использовался для подключения)
+                        # и порт сервера
+                        host_value = f"{self.client_address[0]}:{server_port}"
+                        headers['host'] = host_value
+                        log_debug(f"自动添加Host заголовок для NTRIP 2.0: {host_value} (客户端: {self.client_address})")
+                    except Exception as e:
+                        # Если не удалось получить порт, используем дефолтное значение из конфигурации
+                        host_value = f"{self.client_address[0]}:{config.NTRIP_PORT}"
+                        headers['host'] = host_value
+                        log_debug(f"使用默认Host值: {host_value} (客户端: {self.client_address}, 错误: {e})")
+                else:
+                    # Для обычного HTTP все еще требуем Host заголовок
+                    return False, "Missing Host header"
         
         supported_methods = ['GET', 'POST', 'SOURCE', 'ADMIN', 'OPTIONS']
         
