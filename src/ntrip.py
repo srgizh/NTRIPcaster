@@ -161,10 +161,13 @@ class NTRIPHandler:
             
             self._determine_ntrip_version(headers, request_line)
             
+            # Для отладки: логируем определенный протокол
+            log_debug(f"Определен протокол для {self.client_address}: {self.protocol_type} (версия: {self.ntrip_version}), метод: {method}, путь: {path}")
+            
             is_valid, error_msg = self._is_valid_request(method, path, headers)
             if not is_valid:
                 # Проверка не прошла - сохраняем уровень info, это важная информация
-                log_info(f"Проверка запроса не прошла {self.client_address}: {error_msg}")
+                log_info(f"Проверка запроса не прошла {self.client_address}: {error_msg} (протокол: {self.protocol_type})")
                 self.send_error_response(400, f"Bad Request: {error_msg}")
                 return
             
@@ -503,29 +506,25 @@ class NTRIPHandler:
                 return False, "Invalid path format"
         
 
-        if self.protocol_type in ['http', 'ntrip2_0']:
+        # Для всех HTTP-подобных протоколов автоматически добавляем Host, если он отсутствует
+        # Это позволяет работать с устройствами, которые не отправляют Host заголовок
+        if self.protocol_type in ['http', 'ntrip2_0', 'ntrip1_0_http']:
             if 'host' not in headers:
-                # Для NTRIP 2.0 автоматически добавляем Host заголовок, если он отсутствует
-                # Это позволяет работать с устройствами, которые не отправляют Host заголовок
-                if self.protocol_type == 'ntrip2_0':
-                    # Используем IP адрес клиента и порт сервера для формирования Host
-                    # Это стандартная практика когда Host заголовок отсутствует
-                    try:
-                        # Получаем порт сервера из сокета
-                        server_port = self.client_socket.getsockname()[1]
-                        # Используем IP адрес клиента (который использовался для подключения)
-                        # и порт сервера
-                        host_value = f"{self.client_address[0]}:{server_port}"
-                        headers['host'] = host_value
-                        log_debug(f"Автоматически добавлен Host заголовок для NTRIP 2.0: {host_value} (клиент: {self.client_address})")
-                    except Exception as e:
-                        # Если не удалось получить порт, используем дефолтное значение из конфигурации
-                        host_value = f"{self.client_address[0]}:{config.NTRIP_PORT}"
-                        headers['host'] = host_value
-                        log_debug(f"Использовано значение Host по умолчанию: {host_value} (клиент: {self.client_address}, ошибка: {e})")
-                else:
-                    # Для обычного HTTP все еще требуем Host заголовок
-                    return False, "Missing Host header"
+                # Используем IP адрес клиента и порт сервера для формирования Host
+                # Это стандартная практика когда Host заголовок отсутствует
+                try:
+                    # Получаем порт сервера из сокета
+                    server_port = self.client_socket.getsockname()[1]
+                    # Используем IP адрес клиента (который использовался для подключения)
+                    # и порт сервера
+                    host_value = f"{self.client_address[0]}:{server_port}"
+                    headers['host'] = host_value
+                    log_debug(f"Автоматически добавлен Host заголовок для {self.protocol_type}: {host_value} (клиент: {self.client_address})")
+                except Exception as e:
+                    # Если не удалось получить порт, используем дефолтное значение из конфигурации
+                    host_value = f"{self.client_address[0]}:{config.NTRIP_PORT}"
+                    headers['host'] = host_value
+                    log_debug(f"Использовано значение Host по умолчанию: {host_value} (клиент: {self.client_address}, ошибка: {e})")
         
         supported_methods = ['GET', 'POST', 'SOURCE', 'ADMIN', 'OPTIONS']
         
