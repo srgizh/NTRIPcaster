@@ -1,106 +1,106 @@
 #!/bin/bash
 #
-# NTRIP Caster 一键安装脚本
-# 适用于 Debian/Ubuntu 系统
-# 作者: 2RTK
-# 版本: 1.0.0
+# NTRIP Caster скрипт установки
+# Для систем Debian/Ubuntu
+# Автор: 2RTK
+# Версия: 1.0.0
 #
 
-# 颜色定义
+# Определение цветов
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[0;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-# 检查是否以 root 权限运行
+# Проверка запуска от root
 if [ "$EUID" -ne 0 ]; then
-  echo -e "${RED}错误: 请使用 root 权限运行此脚本 (sudo ./install.sh)${NC}"
+  echo -e "${RED}Ошибка: Запустите скрипт с правами root (sudo ./install.sh)${NC}"
   exit 1
 fi
 
-# 显示欢迎信息
+# Приветственное сообщение
 echo -e "${BLUE}=================================================${NC}"
-echo -e "${BLUE}       2RTK NTRIP Caster 一键安装脚本         ${NC}"
+echo -e "${BLUE}       2RTK NTRIP Caster скрипт установки         ${NC}"
 echo -e "${BLUE}=================================================${NC}"
-echo -e "${GREEN}此脚本将自动安装 2RTK NTRIP Caster 及其依赖，并设置开机自启动${NC}"
+echo -e "${GREEN}Этот скрипт автоматически установит 2RTK NTRIP Caster и зависимости, и настроит автозапуск${NC}"
 echo ""
 
-# 检查系统类型
+# Проверка типа системы
 if [ -f /etc/debian_version ]; then
-    echo -e "${GREEN}检测到 Debian/Ubuntu 系统，继续安装...${NC}"
+    echo -e "${GREEN}Обнаружена система Debian/Ubuntu, продолжаем установку...${NC}"
 else
-    echo -e "${RED}错误: 此脚本仅支持 Debian/Ubuntu 系统${NC}"
+    echo -e "${RED}Ошибка: Этот скрипт поддерживает только системы Debian/Ubuntu${NC}"
     exit 1
 fi
 
-# 设置安装目录
+# Настройка директорий установки
 INSTALL_DIR="/opt/2rtk"
 CONFIG_DIR="/etc/2rtk"
 LOG_DIR="/var/log/2rtk"
 SERVICE_NAME="2rtk"
 
-# 创建安装目录
-echo -e "${YELLOW}创建安装目录...${NC}"
+# Создание директорий установки
+echo -e "${YELLOW}Создание директорий установки...${NC}"
 mkdir -p $INSTALL_DIR
 mkdir -p $CONFIG_DIR
 mkdir -p $LOG_DIR
 
-# 创建日志子目录
-echo -e "${YELLOW}创建日志目录...${NC}"
+# Создание поддиректорий для логов
+echo -e "${YELLOW}Создание директорий для логов...${NC}"
 
 
-# 更新系统并安装依赖
-echo -e "${YELLOW}更新系统并安装依赖...${NC}"
+# Обновление системы и установка зависимостей
+echo -e "${YELLOW}Обновление системы и установка зависимостей...${NC}"
 apt-get update
 apt-get install -y python3 python3-pip python3-venv supervisor nginx git
 
-# 创建 Python 虚拟环境
-echo -e "${YELLOW}创建 Python 虚拟环境...${NC}"
+# Создание Python виртуального окружения
+echo -e "${YELLOW}Создание Python виртуального окружения...${NC}"
 python3 -m venv $INSTALL_DIR/venv
 source $INSTALL_DIR/venv/bin/activate
 
-# 下载项目文件
-echo -e "${YELLOW}下载项目文件...${NC}"
+# Загрузка файлов проекта
+echo -e "${YELLOW}Загрузка файлов проекта...${NC}"
 cd /tmp
 git clone https://github.com/srgizh/NTRIPcaster.git
 cp -r NTRIPcaster/* $INSTALL_DIR/
 
-# 复制并配置 config.ini
-echo -e "${YELLOW}配置 config.ini...${NC}"
+# Копирование и настройка config.ini
+echo -e "${YELLOW}Настройка config.ini...${NC}"
 if [ -f $INSTALL_DIR/config.ini.example ]; then
-    # 备份原始配置文件
+    # Резервное копирование оригинального файла конфигурации
     cp $INSTALL_DIR/config.ini.example $CONFIG_DIR/config.ini.original
     
-    # 复制并修改配置文件
+    # Копирование и изменение файла конфигурации
     cp $INSTALL_DIR/config.ini.example $CONFIG_DIR/config.ini
     
-    # 更新配置文件中的路径
+    # Обновление путей в файле конфигурации
     sed -i "s|path = /app/data/2rtk.db|path = $INSTALL_DIR/data/2rtk.db|g" $CONFIG_DIR/config.ini
     sed -i "s|main_log = /app/logs/main.log|main_log = $LOG_DIR/main.log|g" $CONFIG_DIR/config.ini
     sed -i "s|ntrip_log = /app/logs/ntrip.log|ntrip_log = $LOG_DIR/ntrip.log|g" $CONFIG_DIR/config.ini
     sed -i "s|error_log = /app/logs/errors.log|error_log = $LOG_DIR/errors.log|g" $CONFIG_DIR/config.ini
     
-    # 设置生产环境配置
+    # Настройка конфигурации для продакшена
     sed -i "s|debug = true|debug = false|g" $CONFIG_DIR/config.ini
     
-    # 生成随机密钥
+    # Генерация случайного ключа
     RANDOM_KEY=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1)
     sed -i "s|secret_key = your-secret-key-change-this-in-production|secret_key = $RANDOM_KEY|g" $CONFIG_DIR/config.ini
     
-    echo -e "${GREEN}配置文件已更新${NC}"
+    echo -e "${GREEN}Файл конфигурации обновлен${NC}"
 else
-    echo -e "${RED}错误: 未找到 config.ini.example 文件${NC}"
+    echo -e "${RED}Ошибка: Файл config.ini.example не найден${NC}"
     exit 1
 fi
 
-# 安装 Python 依赖
-echo -e "${YELLOW}安装 Python 依赖...${NC}"
+# Установка Python зависимостей
+echo -e "${YELLOW}Установка Python зависимостей...${NC}"
 $INSTALL_DIR/venv/bin/pip install --upgrade pip
 $INSTALL_DIR/venv/bin/pip install -r $INSTALL_DIR/requirements.txt
 
-# 创建 systemd 服务文件
-echo -e "${YELLOW}创建 systemd 服务文件...${NC}"
+# Создание файла службы systemd
+echo -e "${YELLOW}Создание файла службы systemd...${NC}"
 cat > /etc/systemd/system/$SERVICE_NAME.service << EOF
 [Unit]
 Description=NTRIP Caster Service
@@ -122,8 +122,8 @@ StandardError=append:$LOG_DIR/errors.log
 WantedBy=multi-user.target
 EOF
 
-# 创建日志轮转配置
-echo -e "${YELLOW}创建日志轮转配置...${NC}"
+# Создание конфигурации ротации логов
+echo -e "${YELLOW}Создание конфигурации ротации логов...${NC}"
 cat > /etc/logrotate.d/2rtk << EOF
 $LOG_DIR/main.log $LOG_DIR/ntrip.log $LOG_DIR/errors.log {
     daily
@@ -140,50 +140,50 @@ $LOG_DIR/main.log $LOG_DIR/ntrip.log $LOG_DIR/errors.log {
 }
 EOF
 
-# 设置文件权限
-echo -e "${YELLOW}设置文件权限...${NC}"
+# Установка прав доступа к файлам
+echo -e "${YELLOW}Установка прав доступа к файлам...${NC}"
 chmod +x $INSTALL_DIR/main.py
 chown -R root:root $INSTALL_DIR
 chown -R root:root $CONFIG_DIR
 chown -R root:root $LOG_DIR
 
-# 设置日志目录权限
-echo -e "${YELLOW}设置日志目录权限...${NC}"
+# Установка прав доступа к директориям логов
+echo -e "${YELLOW}Установка прав доступа к директориям логов...${NC}"
 chmod -R 755 $LOG_DIR
 find $LOG_DIR -type d -exec chmod 755 {} \;
 find $LOG_DIR -type f -exec chmod 644 {} \;
 
-# 创建数据库目录
-echo -e "${YELLOW}创建数据库目录...${NC}"
+# Создание директории для базы данных
+echo -e "${YELLOW}Создание директории для базы данных...${NC}"
 mkdir -p $INSTALL_DIR/data
 chmod 755 $INSTALL_DIR/data
 
-# 创建符号链接，方便访问配置文件
+# Создание символической ссылки для удобного доступа к файлу конфигурации
 ln -sf $CONFIG_DIR/config.ini $INSTALL_DIR/config.ini
 
-# 启用并启动服务
-echo -e "${YELLOW}启用并启动服务...${NC}"
+# Включение и запуск службы
+echo -e "${YELLOW}Включение и запуск службы...${NC}"
 systemctl daemon-reload
 systemctl enable $SERVICE_NAME
 systemctl start $SERVICE_NAME
 
-# 配置防火墙（如果存在）
-echo -e "${YELLOW}配置防火墙...${NC}"
+# Настройка файрвола (если установлен)
+echo -e "${YELLOW}Настройка файрвола...${NC}"
 if command -v ufw > /dev/null; then
-    ufw allow 2101/tcp  # NTRIP 端口
-    ufw allow 5757/tcp  # Web 管理界面端口
-    echo -e "${GREEN}已配置 UFW 防火墙规则${NC}"
+    ufw allow 2101/tcp  # NTRIP порт
+    ufw allow 5757/tcp  # Web интерфейс управления порт
+    echo -e "${GREEN}Настроены правила файрвола UFW${NC}"
 elif command -v firewall-cmd > /dev/null; then
     firewall-cmd --permanent --add-port=2101/tcp
     firewall-cmd --permanent --add-port=5757/tcp
     firewall-cmd --reload
-    echo -e "${GREEN}已配置 firewalld 防火墙规则${NC}"
+    echo -e "${GREEN}Настроены правила файрвола firewalld${NC}"
 else
-    echo -e "${YELLOW}未检测到支持的防火墙，请手动配置防火墙规则${NC}"
+    echo -e "${YELLOW}Поддерживаемый файрвол не обнаружен, настройте правила файрвола вручную${NC}"
 fi
 
-# 创建 Nginx 配置（可选，用于反向代理 Web 管理界面）
-echo -e "${YELLOW}创建 Nginx 配置...${NC}"
+# Создание конфигурации Nginx (опционально, для обратного проксирования Web интерфейса управления)
+echo -e "${YELLOW}Создание конфигурации Nginx...${NC}"
 cat > /etc/nginx/sites-available/2rtk << EOF
 server {
     listen 80;
@@ -201,41 +201,41 @@ server {
 }
 EOF
 
-# 启用 Nginx 配置
+# Включение конфигурации Nginx
 ln -sf /etc/nginx/sites-available/2rtk /etc/nginx/sites-enabled/
 systemctl restart nginx
 
-# 检查服务状态
-echo -e "${YELLOW}检查服务状态...${NC}"
+# Проверка состояния службы
+echo -e "${YELLOW}Проверка состояния службы...${NC}"
 sleep 3
 if systemctl is-active --quiet $SERVICE_NAME; then
-    echo -e "${GREEN}NTRIP Caster 服务已成功启动！${NC}"
+    echo -e "${GREEN}Служба NTRIP Caster успешно запущена!${NC}"
 else
-    echo -e "${RED}NTRIP Caster 服务启动失败，请检查日志: $LOG_DIR/errors.log${NC}"
+    echo -e "${RED}Служба NTRIP Caster не запустилась, проверьте логи: $LOG_DIR/errors.log${NC}"
 fi
 
-# 显示安装信息
+# Отображение информации об установке
 echo -e "${BLUE}=================================================${NC}"
-echo -e "${GREEN}2RTK NTRIP Caster 安装完成！${NC}"
+echo -e "${GREEN}2RTK NTRIP Caster установка завершена!${NC}"
 echo -e "${BLUE}------------------------------------------------${NC}"
-echo -e "${YELLOW}安装目录:${NC} $INSTALL_DIR"
-echo -e "${YELLOW}配置目录:${NC} $CONFIG_DIR"
-echo -e "${YELLOW}日志目录:${NC} $LOG_DIR"
-echo -e "${YELLOW}NTRIP 端口:${NC} 2101"
-echo -e "${YELLOW}Web 管理界面:${NC} http://服务器IP:5757"
-echo -e "${YELLOW}Nginx 代理:${NC} http://服务器IP"
+echo -e "${YELLOW}Директория установки:${NC} $INSTALL_DIR"
+echo -e "${YELLOW}Директория конфигурации:${NC} $CONFIG_DIR"
+echo -e "${YELLOW}Директория логов:${NC} $LOG_DIR"
+echo -e "${YELLOW}NTRIP порт:${NC} 2101"
+echo -e "${YELLOW}Web интерфейс управления:${NC} http://IP_СЕРВЕРА:5757"
+echo -e "${YELLOW}Nginx прокси:${NC} http://IP_СЕРВЕРА"
 echo -e "${BLUE}------------------------------------------------${NC}"
-echo -e "${YELLOW}服务管理命令:${NC}"
-echo -e "  启动服务: ${GREEN}systemctl start $SERVICE_NAME${NC}"
-echo -e "  停止服务: ${GREEN}systemctl stop $SERVICE_NAME${NC}"
-echo -e "  重启服务: ${GREEN}systemctl restart $SERVICE_NAME${NC}"
-echo -e "  查看状态: ${GREEN}systemctl status $SERVICE_NAME${NC}"
-echo -e "  查看日志: ${GREEN}journalctl -u $SERVICE_NAME${NC}"
+echo -e "${YELLOW}Команды управления службой:${NC}"
+echo -e "  Запуск службы: ${GREEN}systemctl start $SERVICE_NAME${NC}"
+echo -e "  Остановка службы: ${GREEN}systemctl stop $SERVICE_NAME${NC}"
+echo -e "  Перезапуск службы: ${GREEN}systemctl restart $SERVICE_NAME${NC}"
+echo -e "  Просмотр состояния: ${GREEN}systemctl status $SERVICE_NAME${NC}"
+echo -e "  Просмотр логов: ${GREEN}journalctl -u $SERVICE_NAME${NC}"
 echo -e "${BLUE}=================================================${NC}"
 
-# 提示修改默认密码
-echo -e "${RED}安全提示: 请尽快修改默认管理员密码!${NC}"
-echo -e "默认管理员账号: admin"
-echo -e "默认管理员密码: admin123"
+# Предупреждение об изменении пароля по умолчанию
+echo -e "${RED}Важно для безопасности: Немедленно измените пароль администратора по умолчанию!${NC}"
+echo -e "Имя пользователя администратора по умолчанию: admin"
+echo -e "Пароль администратора по умолчанию: admin123"
 
 exit 0
