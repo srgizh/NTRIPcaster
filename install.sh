@@ -63,7 +63,7 @@ source $INSTALL_DIR/venv/bin/activate
 # 下载项目文件
 echo -e "${YELLOW}下载项目文件...${NC}"
 cd /tmp
-git clone https://github.com/Rampump/NTRIPcaster.git
+git clone https://github.com/srgizh/NTRIPcaster.git
 cp -r NTRIPcaster/* $INSTALL_DIR/
 
 # 复制并配置 config.ini
