@@ -174,6 +174,11 @@ class SimpleDataForwarder:
             client_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
             current_time = time.time()
+            
+            # Установить last_sent_timestamp в прошлое, чтобы новый клиент получил последние данные из буфера.
+            # Используем небольшой отрицательный оффсет, чтобы гарантировать получение данных, которые уже есть
+            initial_timestamp = current_time - 1.0  # 1 секунда назад, чтобы получить последние данные.
+            
             client_info = {
                 'socket': client_socket,
                 'user': user,
@@ -184,7 +189,7 @@ class SimpleDataForwarder:
                 'connection_id': connection_id,
                 'connected_at': current_time,
                 'last_seen': current_time,
-                'last_sent_timestamp': current_time,  
+                'last_sent_timestamp': initial_timestamp,  # Установить в прошлое для получения последних данных
                 'bytes_sent': 0,
                 'messages_sent': 0,
                 'send_errors': 0
@@ -205,6 +210,28 @@ class SimpleDataForwarder:
                 
                 self.stats['total_clients'] += 1
                 self.stats['active_clients'] = sum(len(clients) for clients in self.clients.values())
+            
+            # Попытаться немедленно отправить последние данные из буфера новому клиенту
+            try:
+                with self.buffer_lock:
+                    if mount in self.mount_buffers:
+                        buffer = self.mount_buffers[mount]
+                        latest_data = buffer.get_latest(count=10)  # Получить последние 10 сообщений
+                        if latest_data:
+                            # Отправить последние данные немедленно
+                            try:
+                                bytes_sent = self._send_data_simple(client_info, latest_data)
+                                if bytes_sent > 0:
+                                    client_info['last_sent_timestamp'] = latest_data[-1][0] if latest_data else current_time
+                                    client_info['bytes_sent'] += bytes_sent
+                                    client_info['messages_sent'] += len(latest_data)
+                                    logger.log_debug(f"Отправлено {bytes_sent} байт последних данных новому клиенту {user}@{mount}", 'ntrip')
+                            except Exception as e:
+                                # Не критично, если не удалось отправить сразу - данные отправятся в следующем цикле
+                                logger.log_debug(f"Не удалось немедленно отправить данные новому клиенту {user}@{mount}: {e}", 'ntrip')
+            except Exception as e:
+                # Не критично, если не удалось - данные отправятся в следующем цикле
+                logger.log_debug(f"Ошибка при попытке отправить последние данные новому клиенту: {e}", 'ntrip')
             
             logger.log_client_connect(user, mount, addr[0], protocol_version)
             return client_info
