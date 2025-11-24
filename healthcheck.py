@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-NTRIP Caster 健康检查脚本
-用于Docker容器健康检查和监控
+Скрипт проверки работоспособности NTRIP Caster
+Для проверки здоровья Docker-контейнера и мониторинга
 """
 
 import sys
@@ -15,7 +15,7 @@ import logging
 from typing import Dict, List, Tuple, Optional
 from pathlib import Path
 
-# 配置日志
+# Настройка логирования
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s'
@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 
 
 class HealthChecker:
-    """健康检查器"""
+    """Проверка работоспособности"""
     
     def __init__(self):
         self.checks = [
@@ -35,20 +35,20 @@ class HealthChecker:
         ]
     
     def check_web_service(self) -> Tuple[bool, str]:
-        """检查Web服务"""
+        """Проверка веб-сервиса"""
         try:
             with urllib.request.urlopen('http://localhost:5757/health', timeout=5) as response:
                 if response.status == 200:
-                    return True, "Web服务正常"
+                    return True, "Веб-сервис работает нормально"
                 else:
-                    return False, f"Web服务返回状态码: {response.status}"
+                    return False, f"Веб-сервис вернул код состояния: {response.status}"
         except urllib.error.URLError as e:
-            return False, f"Web服务连接失败: {e}"
+            return False, f"Ошибка подключения к веб-сервису: {e}"
         except Exception as e:
-            return False, f"Web服务检查异常: {e}"
+            return False, f"Исключение при проверке веб-сервиса: {e}"
     
     def check_ntrip_service(self) -> Tuple[bool, str]:
-        """检查NTRIP服务端口"""
+        """Проверка порта NTRIP-сервиса"""
         try:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sock.settimeout(5)
@@ -56,14 +56,14 @@ class HealthChecker:
             sock.close()
             
             if result == 0:
-                return True, "NTRIP服务端口正常"
+                return True, "Порт NTRIP-сервиса работает нормально"
             else:
-                return False, "NTRIP服务端口无法连接"
+                return False, "Не удалось подключиться к порту NTRIP-сервиса"
         except Exception as e:
-            return False, f"NTRIP服务检查异常: {e}"
+            return False, f"Исключение при проверке NTRIP-сервиса: {e}"
     
     def check_memory_usage(self) -> Tuple[bool, str]:
-        """检查内存使用情况"""
+        """Проверка использования памяти"""
         try:
             with open('/proc/meminfo', 'r') as f:
                 meminfo = f.read()
@@ -73,37 +73,37 @@ class HealthChecker:
             
             for line in meminfo.split('\n'):
                 if line.startswith('MemTotal:'):
-                    mem_total = int(line.split()[1]) * 1024  # 转换为字节
+                    mem_total = int(line.split()[1]) * 1024  # Преобразование в байты
                 elif line.startswith('MemAvailable:'):
-                    mem_available = int(line.split()[1]) * 1024  # 转换为字节
+                    mem_available = int(line.split()[1]) * 1024  # Преобразование в байты
             
             if mem_total > 0:
                 usage_percent = (mem_total - mem_available) / mem_total * 100
                 if usage_percent < 90:
-                    return True, f"内存使用率: {usage_percent:.1f}%"
+                    return True, f"Использование памяти: {usage_percent:.1f}%"
                 else:
-                    return False, f"内存使用率过高: {usage_percent:.1f}%"
+                    return False, f"Слишком высокое использование памяти: {usage_percent:.1f}%"
             else:
-                return False, "无法获取内存信息"
+                return False, "Не удалось получить информацию о памяти"
         except Exception as e:
-            return False, f"内存检查异常: {e}"
+            return False, f"Исключение при проверке памяти: {e}"
     
     def check_disk_space(self) -> Tuple[bool, str]:
-        """检查磁盘空间"""
+        """Проверка дискового пространства"""
         try:
             import shutil
             total, used, free = shutil.disk_usage('/app')
             usage_percent = used / total * 100
             
             if usage_percent < 90:
-                return True, f"磁盘使用率: {usage_percent:.1f}%"
+                return True, f"Использование диска: {usage_percent:.1f}%"
             else:
-                return False, f"磁盘空间不足: {usage_percent:.1f}%"
+                return False, f"Недостаточно дискового пространства: {usage_percent:.1f}%"
         except Exception as e:
-            return False, f"磁盘检查异常: {e}"
+            return False, f"Исключение при проверке диска: {e}"
     
     def run_checks(self) -> Dict[str, any]:
-        """运行所有健康检查"""
+        """Запуск всех проверок работоспособности"""
         results = {
             'healthy': True,
             'timestamp': time.time(),
@@ -129,34 +129,34 @@ class HealthChecker:
                     failed_checks.append(check_name)
                     results['healthy'] = False
             except Exception as e:
-                logger.error(f"[ERROR] {check_name}: 检查失败 - {e}")
+                logger.error(f"[ERROR] {check_name}: Проверка не удалась - {e}")
                 results['checks'][check_name] = {
                     'success': False,
-                    'message': f"检查失败: {e}"
+                    'message': f"Проверка не удалась: {e}"
                 }
                 failed_checks.append(check_name)
                 results['healthy'] = False
         
         if results['healthy']:
-            results['summary'] = "所有健康检查通过"
-            logger.info("[OK] 所有健康检查通过")
+            results['summary'] = "Все проверки работоспособности пройдены"
+            logger.info("[OK] Все проверки работоспособности пройдены")
         else:
-            results['summary'] = f"健康检查失败: {', '.join(failed_checks)}"
-            logger.error(f"[FAIL] 健康检查失败: {', '.join(failed_checks)}")
+            results['summary'] = f"Проверки работоспособности не пройдены: {', '.join(failed_checks)}"
+            logger.error(f"[FAIL] Проверки работоспособности не пройдены: {', '.join(failed_checks)}")
         
         return results
 
 
 def main():
-    """主函数"""
+    """Главная функция"""
     checker = HealthChecker()
     results = checker.run_checks()
     
-    # 输出JSON格式的结果（用于监控系统）
+    # Вывод результатов в формате JSON (для систем мониторинга)
     if '--json' in sys.argv:
         print(json.dumps(results, indent=2))
     
-    # 根据健康状态设置退出码
+    # Установка кода выхода в зависимости от состояния работоспособности
     if results['healthy']:
         sys.exit(0)
     else:

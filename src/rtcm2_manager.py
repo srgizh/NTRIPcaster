@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-RTCM2解析管理器
+Менеджер парсинга RTCM2
 """
 
 import threading
@@ -10,85 +10,85 @@ from .logger import log_debug, log_info, log_warning, log_error
 
 
 class RTCM2ParserManager:
-    """RTCM2解析管理器 - 兼容原parser_manager接口"""
+    """Менеджер парсинга RTCM2 - совместимость с оригинальным интерфейсом parser_manager"""
     
     def __init__(self):
-        self.parsers: Dict[str, Any] = {}  # RTCMParserThread实例
-        self.web_parsers: Dict[str, Any] = {}  # Web解析线程实例（单独管理）
-        self.str_parsers: Dict[str, Any] = {}  # STR修正线程实例（单独管理）
-        self.current_web_mount: Optional[str] = None  # 当前活跃的Web解析挂载点
+        self.parsers: Dict[str, Any] = {}  # Экземпляры RTCMParserThread
+        self.web_parsers: Dict[str, Any] = {}  # Экземпляры потоков парсинга Web (отдельное управление)
+        self.str_parsers: Dict[str, Any] = {}  # Экземпляры потоков исправления STR (отдельное управление)
+        self.current_web_mount: Optional[str] = None  # Текущая активная точка монтирования для парсинга Web
         self.lock = threading.RLock()
-        log_info("RTCM2数据解析管理器初始化完成")
+        log_info("Менеджер парсинга данных RTCM2 инициализирован")
 
     def start_parser(self, mount_name: str, mode: str = "str_fix", duration: int = 30, 
                      push_callback: Optional[Callable[[Dict], None]] = None) -> bool:
-        """启动解析器（兼容原接口）"""
+        """Запуск парсера (совместимость с оригинальным интерфейсом)"""
         with self.lock:
-            # 如果已存在解析器，先停止
+            # Если парсер уже существует, сначала остановить его
             if mount_name in self.parsers:
                 self.stop_parser(mount_name)
             
             try:
-                # 动态导入避免循环导入
+                # Динамический импорт для избежания циклических импортов
                 from .rtcm2 import start_str_fix_parser, start_web_parser
                 
                 if mode == "str_fix":
                     parser = start_str_fix_parser(mount_name, duration, push_callback)
-                    # STR修正模式：添加到STR解析器字典
+                    # Режим исправления STR: добавление в словарь парсеров STR
                     self.str_parsers[mount_name] = parser
-                    log_info(f"启动RTCM解析对 [挂载点: {mount_name}进行STR修正, 时长: {duration}s]")
+                    log_info(f"Запущен парсинг RTCM для точки монтирования {mount_name} для исправления STR, длительность: {duration}s")
                 else:  # realtime_web
                     parser = start_web_parser(mount_name, push_callback)
-                    # Web解析模式：添加到Web解析器字典
+                    # Режим парсинга Web: добавление в словарь парсеров Web
                     self.web_parsers[mount_name] = parser
-                    log_info(f"启动Web端[挂载点: {mount_name}RTCM数据解析]")
+                    log_info(f"Запущен парсинг данных RTCM для Web для точки монтирования {mount_name}")
                 
-                # 保持原有兼容性
+                # Сохранение оригинальной совместимости
                 self.parsers[mount_name] = parser
-                log_info(f"已启动对[挂载点: {mount_name}, 模式: {mode}]的RTCM数据解析")
+                log_info(f"Запущен парсинг данных RTCM для точки монтирования {mount_name}, режим: {mode}")
                 return True
             except Exception as e:
-                log_error(f"启动对[挂载点: {mount_name}]的RTCM数据解析失败: {str(e)}")
+                log_error(f"Ошибка при запуске парсинга данных RTCM для точки монтирования {mount_name}: {str(e)}")
                 return False
 
     def stop_parser(self, mount_name: str):
-        """停止解析器（兼容原接口）"""
+        """Остановка парсера (совместимость с оригинальным интерфейсом)"""
         with self.lock:
             if mount_name in self.parsers:
                 parser = self.parsers[mount_name]
                 parser.stop()
                 del self.parsers[mount_name]
                 
-                # 从对应的分类字典中删除
+                # Удаление из соответствующего классифицированного словаря
                 if mount_name in self.web_parsers:
                     del self.web_parsers[mount_name]
-                    log_info(f"Web端对[挂载点: {mount_name}]RTCM数据解析已关闭")
+                    log_info(f"Парсинг данных RTCM для Web для точки монтирования {mount_name} закрыт")
 
                 elif mount_name in self.str_parsers:
                     del self.str_parsers[mount_name]
-                    log_info(f"已关闭对[挂载点: {mount_name}]的STR修正解析")
+                    log_info(f"Парсинг исправления STR для точки монтирования {mount_name} закрыт")
 
                 else:
-                    log_info(f"已关闭对[挂载点: {mount_name}]的RTCM数据解析")
+                    log_info(f"Парсинг данных RTCM для точки монтирования {mount_name} закрыт")
              
     def get_result(self, mount_name: str) -> Optional[Dict]:
-        """获取解析结果（兼容原接口）"""
+        """Получение результатов парсинга (совместимость с оригинальным интерфейсом)"""
         with self.lock:
             parser = self.parsers.get(mount_name)
             if parser:
-                # 获取rtcm2.py的解析结果并转换为兼容格式
+                # Получение результатов парсинга из rtcm2.py и преобразование в совместимый формат
                 result = parser.result.copy()
                 
-                # 转换为原接口期望的格式
+                # Преобразование в формат, ожидаемый оригинальным интерфейсом
                 converted_result = self._convert_result_format(result)
-                log_debug(f"获取解析结果 [挂载点: {mount_name}]: {converted_result is not None}")
+                log_debug(f"Получены результаты парсинга для точки монтирования {mount_name}: {converted_result is not None}")
                 return converted_result
             
-            log_debug(f"未找到解析器 [挂载点: {mount_name}]")
+            log_debug(f"Парсер не найден для точки монтирования {mount_name}")
             return None
 
     def _convert_result_format(self, result: Dict) -> Dict:
-        """将rtcm2.py的结果格式转换为原接口期望的格式"""
+        """Преобразование формата результатов rtcm2.py в формат, ожидаемый оригинальным интерфейсом"""
         converted = {
             "mount": result.get("mount"),
             "bitrate": result.get("bitrate", 0),
@@ -96,7 +96,7 @@ class RTCM2ParserManager:
             "last_update": time.time()
         }
         
-        # 位置信息转换
+        # Преобразование информации о местоположении
         location = result.get("location")
         if location:
             converted.update({
@@ -107,7 +107,7 @@ class RTCM2ParserManager:
                 "city": location.get("city")
             })
         
-        # 设备信息转换
+        # Преобразование информации об устройстве
         device = result.get("device")
         if device:
             converted.update({
@@ -116,18 +116,18 @@ class RTCM2ParserManager:
                 "firmware": device.get("firmware")
             })
         
-        # 消息统计转换
+        # Преобразование статистики сообщений
         msg_stats = result.get("message_stats", {})
         if msg_stats:
-            # GNSS系统组合
+            # Комбинация систем GNSS
             gnss_set = msg_stats.get("gnss", set())
             converted["gnss_combined"] = "+".join(sorted(gnss_set)) if gnss_set else "N/A"
             
-            # 载波组合
+            # Комбинация несущих
             carriers_set = msg_stats.get("carriers", set())
             converted["carrier_combined"] = "+".join(sorted(carriers_set)) if carriers_set else "N/A"
             
-            # 消息类型字符串
+            # Строка типов сообщений
             frequency = msg_stats.get("frequency", {})
             if frequency:
                 msg_types_list = [f"{msg_id}({freq})" for msg_id, freq in frequency.items()]
@@ -138,89 +138,89 @@ class RTCM2ParserManager:
         return converted
 
     def stop_all(self):
-        """停止所有解析器（兼容原接口）"""
+        """Остановка всех парсеров (совместимость с оригинальным интерфейсом)"""
         with self.lock:
             for mount_name in list(self.parsers.keys()):
                 self.stop_parser(mount_name)
-            log_info("所有解析器已停止")
+            log_info("Все парсеры остановлены")
 
-    # Web模式相关方法（兼容原接口）
+    # Методы, связанные с режимом Web (совместимость с оригинальным интерфейсом)
     def acquire_parser(self, mount_name: str, push_callback: Optional[Callable[[Dict], None]] = None) -> Optional[Dict]:
-        """获取解析器（Web模式）"""
+        """Получение парсера (режим Web)"""
         success = self.start_parser(mount_name, mode="realtime_web", push_callback=push_callback)
         if success:
             return self.get_result(mount_name)
         return None
 
     def release_parser(self, mount_name: str):
-        """释放解析器（Web模式）"""
+        """Освобождение парсера (режим Web)"""
         self.stop_parser(mount_name)
 
     def start_realtime_parsing(self, mount_name: str, push_callback: Optional[Callable[[Dict], None]] = None) -> bool:
-        """启动实时解析（Web模式）- 改进版：先清理前一个Web解析线程，再启动新的"""
+        """Запуск парсинга в реальном времени (режим Web) - улучшенная версия: сначала очистить предыдущий поток парсинга Web, затем запустить новый"""
         with self.lock:
-            # 第一步：清理前一个Web解析线程（如果存在）
+            # Шаг 1: Очистка предыдущего потока парсинга Web (если существует)
             if self.current_web_mount and self.current_web_mount != mount_name:
-                log_info(f"检测到前一个Web解析线程 [挂载点: {self.current_web_mount}]，准备清理")
+                log_info(f"Обнаружен предыдущий поток парсинга Web для точки монтирования {self.current_web_mount}, подготовка к очистке")
                 self._stop_web_parser_only(self.current_web_mount)
             
-            # 第二步：如果当前挂载点已有Web解析线程，也要先停止
+            # Шаг 2: Если текущая точка монтирования уже имеет поток парсинга Web, также сначала остановить
             if mount_name in self.web_parsers:
-                log_info(f"当前挂载点 [挂载点: {mount_name}] 已有Web解析线程，先停止")
+                log_info(f"Текущая точка монтирования {mount_name} уже имеет поток парсинга Web, сначала остановить")
                 self._stop_web_parser_only(mount_name)
             
-            # 第三步：启动新的Web解析线程
+            # Шаг 3: Запуск нового потока парсинга Web
             success = self.start_parser(mount_name, mode="realtime_web", push_callback=push_callback)
             if success:
-                # 更新当前活跃的Web解析挂载点
+                # Обновление текущей активной точки монтирования для парсинга Web
                 self.current_web_mount = mount_name
-                log_info(f"Web解析线程启动成功，当前活跃挂载点: {mount_name}")
+                log_info(f"Поток парсинга Web успешно запущен, текущая активная точка монтирования: {mount_name}")
             
             return success
 
     def _stop_web_parser_only(self, mount_name: str):
-        """仅停止指定挂载点的Web解析线程，不影响STR修正线程"""
+        """Остановка только потока парсинга Web для указанной точки монтирования, не влияет на поток исправления STR"""
         if mount_name in self.web_parsers:
             parser = self.web_parsers[mount_name]
             parser.stop()
             del self.web_parsers[mount_name]
             
-            # 从通用字典中删除（如果存在）
+            # Удаление из общего словаря (если существует)
             if mount_name in self.parsers:
                 del self.parsers[mount_name]
             
-            # 清理当前活跃挂载点标记
+            # Очистка маркера текущей активной точки монтирования
             if self.current_web_mount == mount_name:
                 self.current_web_mount = None
             
-            log_info(f"已停止Web解析线程 [挂载点: {mount_name}]，STR修正线程不受影响")
+            log_info(f"Поток парсинга Web для точки монтирования {mount_name} остановлен, поток исправления STR не затронут")
 
     def stop_realtime_parsing(self):
-        """停止所有实时解析（Web模式）- 改进版：仅停止Web解析线程，保护STR修正线程"""
+        """Остановка всего парсинга в реальном времени (режим Web) - улучшенная версия: остановить только потоки парсинга Web, защитить потоки исправления STR"""
         with self.lock:
-            # 仅停止Web解析线程，不影响STR修正线程
+            # Остановить только потоки парсинга Web, не влияя на потоки исправления STR
             web_mounts = list(self.web_parsers.keys())
             for mount_name in web_mounts:
                 self._stop_web_parser_only(mount_name)
             
-            # 清理当前活跃挂载点
+            # Очистка текущей активной точки монтирования
             self.current_web_mount = None
             
             if web_mounts:
-                log_info(f"已停止所有Web解析线程 [挂载点: {', '.join(web_mounts)}]，STR修正线程继续运行")
+                log_info(f"Остановлены все потоки парсинга Web для точек монтирования: {', '.join(web_mounts)}, потоки исправления STR продолжают работать")
             else:
-                log_info("没有活跃的Web解析线程需要停止")
+                log_info("Нет активных потоков парсинга Web для остановки")
 
     def update_parsing_heartbeat(self, mount_name: str):
-        """更新解析心跳（兼容原接口，暂时无需实现）"""
+        """Обновление пульса парсинга (совместимость с оригинальным интерфейсом, пока не требует реализации)"""
         pass
 
     def get_parsed_mount_data(self, mount_name: str, limit: int = None) -> Optional[Dict]:
-        """获取挂载点解析数据（兼容原接口）"""
+        """Получение данных парсинга точки монтирования (совместимость с оригинальным интерфейсом)"""
         return self.get_result(mount_name)
 
     def get_mount_statistics(self, mount_name: str) -> Optional[Dict]:
-        """获取挂载点统计信息（兼容原接口）"""
+        """Получение статистики точки монтирования (совместимость с оригинальным интерфейсом)"""
         result = self.get_result(mount_name)
         if result:
             return {
@@ -231,7 +231,7 @@ class RTCM2ParserManager:
         return None
 
     def get_parser_status(self) -> Dict:
-        """获取解析器状态信息"""
+        """Получение информации о состоянии парсера"""
         with self.lock:
             return {
                 "total_parsers": len(self.parsers),
@@ -243,19 +243,19 @@ class RTCM2ParserManager:
             }
 
     def is_web_parsing_active(self, mount_name: str) -> bool:
-        """检查指定挂载点是否有活跃的Web解析线程"""
+        """Проверка наличия активного потока парсинга Web для указанной точки монтирования"""
         with self.lock:
             return mount_name in self.web_parsers
 
     def is_str_parsing_active(self, mount_name: str) -> bool:
-        """检查指定挂载点是否有活跃的STR修正解析线程"""
+        """Проверка наличия активного потока исправления STR для указанной точки монтирования"""
         with self.lock:
             return mount_name in self.str_parsers
 
     def get_current_web_mount(self) -> Optional[str]:
-        """获取当前活跃的Web解析挂载点"""
+        """Получение текущей активной точки монтирования для парсинга Web"""
         return self.current_web_mount
 
 
-# 全局单例管理器
+# Глобальный менеджер-синглтон
 parser_manager = RTCM2ParserManager()

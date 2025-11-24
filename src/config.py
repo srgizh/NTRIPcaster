@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-config.py - 配置文件
-从config.ini文件读取NTRIP Caster的所有配置参数
+config.py - Модуль конфигурации
+Чтение всех параметров конфигурации NTRIP Caster из файла config.ini
 """
 
 import os
@@ -16,13 +16,13 @@ CONFIG_FILE = os.environ.get('NTRIP_CONFIG_FILE',
 config = configparser.ConfigParser()
 
 if os.path.exists(CONFIG_FILE):
-    print(f"加载配置文件: {CONFIG_FILE}")
+    print(f"Загрузка файла конфигурации: {CONFIG_FILE}")
     config.read(CONFIG_FILE, encoding='utf-8')
 else:
-    raise FileNotFoundError(f"配置文件 {CONFIG_FILE} 不存在")
+    raise FileNotFoundError(f"Файл конфигурации {CONFIG_FILE} не найден")
 
 def get_config_value(section, key, fallback=None, value_type=str):
-    """获取配置值并转换类型"""
+    """Получение значения конфигурации с преобразованием типа"""
     try:
         if value_type == bool:
             return config.getboolean(section, key, fallback=fallback)
@@ -38,9 +38,9 @@ def get_config_value(section, key, fallback=None, value_type=str):
     except (configparser.NoSectionError, configparser.NoOptionError):
         return fallback
 
-# ==================== 基本配置 ====================
+# ==================== Основная конфигурация ====================
 
-# 基本应用信息
+# Основная информация о приложении
 APP_NAME = get_config_value('app', 'name', '2RTK Ntrip Caster')
 APP_VERSION = get_config_value('app', 'version', '2.2.0')
 APP_DESCRIPTION = get_config_value('app', 'description', 'Ntrip Caster')
@@ -54,17 +54,17 @@ VERSION = APP_VERSION
 
 DEBUG = get_config_value('development', 'debug_mode', False, bool)
 
-# ==================== CASTER配置 ====================
+# ==================== Конфигурация CASTER ====================
 
-# NTRIP Caster地理位置信息
+# Географическая информация NTRIP Caster
 CASTER_COUNTRY = get_config_value('caster', 'country', 'CHN')
 CASTER_LATITUDE = get_config_value('caster', 'latitude', 25.20341154, float)
 CASTER_LONGITUDE = get_config_value('caster', 'longitude', 110.277492, float)
 
-# ==================== 网络配置 ====================
+# ==================== Сетевая конфигурация ====================
 
 def get_all_network_interfaces() -> List[Tuple[str, str]]:
-    """获取所有网络接口的IP地址"""
+    """Получение IP адресов всех сетевых интерфейсов"""
     interfaces = []
     
     try:
@@ -74,9 +74,9 @@ def get_all_network_interfaces() -> List[Tuple[str, str]]:
         
         for info in socket.getaddrinfo(hostname, None):
             family, socktype, proto, canonname, sockaddr = info
-            if family == socket.AF_INET:  # 只获取IPv4地址
+            if family == socket.AF_INET:  # Получаем только IPv4 адреса
                 ip = sockaddr[0]
-                if ip not in [addr[1] for addr in interfaces]:  # 避免重复
+                if ip not in [addr[1] for addr in interfaces]:  # Избегаем дубликатов
                     interfaces.append((f"Interface-{len(interfaces)+1}", ip))
     except Exception:
         pass
@@ -88,7 +88,7 @@ def get_all_network_interfaces() -> List[Tuple[str, str]]:
     return interfaces
 
 def get_private_ips() -> List[Tuple[str, str]]:
-    """获取所有内网IP地址（仅检测实际可用的IP，不强制添加回环地址）"""
+    """Получение всех приватных IP адресов (только обнаружение реально доступных IP, без принудительного добавления loopback адреса)"""
     private_ips = []
     
     try:
@@ -123,8 +123,8 @@ def get_private_ips() -> List[Tuple[str, str]]:
     
     return private_ips
 
-def get_display_urls(port: int, service_name: str = "服务") -> List[str]:
-    """获取用于显示的所有可访问URL"""
+def get_display_urls(port: int, service_name: str = "сервис") -> List[str]:
+    """Получение всех доступных URL для отображения"""
     urls = []
     
     listen_host = get_config_value('network', 'host', '0.0.0.0')
@@ -139,30 +139,30 @@ def get_display_urls(port: int, service_name: str = "服务") -> List[str]:
     
     return urls
 
-# 网络配置
+# Сетевая конфигурация
 HOST = get_config_value('network', 'host', '0.0.0.0') 
 
 
 NTRIP_HOST = HOST  
-NTRIP_PORT = get_config_value('ntrip', 'port', 2101, int)  # NTRIP服务端口
+NTRIP_PORT = get_config_value('ntrip', 'port', 2101, int)  # Порт NTRIP сервиса
 
-WEB_HOST = HOST  # Web服务监听地址
-WEB_PORT = get_config_value('web', 'port', 5757, int)      # Web服务端口
+WEB_HOST = HOST  # Адрес прослушивания Web сервиса
+WEB_PORT = get_config_value('web', 'port', 5757, int)      # Порт Web сервиса
 
-# 最大连接数
+# Максимальное количество подключений
 MAX_CONNECTIONS = get_config_value('network', 'max_connections', 5000, int)
 
-# 缓冲区大小
+# Размер буфера
 BUFFER_SIZE = get_config_value('network', 'buffer_size', 81920, int)      # 80KB
 MAX_BUFFER_SIZE = get_config_value('network', 'max_buffer_size', 655360, int) # 640KB
 
-# ==================== 数据库配置 ====================
+# ==================== Конфигурация базы данных ====================
 
 DATABASE_PATH = get_config_value('database', 'path', '2rtk.db')
 DB_POOL_SIZE = get_config_value('database', 'pool_size', 10, int)
 DB_TIMEOUT = get_config_value('database', 'timeout', 30, int)
 
-# ==================== 日志配置 ====================
+# ==================== Конфигурация логирования ====================
 
 LOG_DIR = get_config_value('logging', 'log_dir', 'logs')
 LOG_FILES = {
@@ -177,71 +177,71 @@ LOG_FORMAT = get_config_value('logging', 'log_format', '%(asctime)s - %(name)s -
 
 LOG_MAX_SIZE = get_config_value('logging', 'max_log_size', 10 * 1024 * 1024, int)  # 10MB
 
-LOG_BACKUP_COUNT = get_config_value('logging', 'backup_count', 5, int)  # 保留5个备份文件
+LOG_BACKUP_COUNT = get_config_value('logging', 'backup_count', 5, int)  # Хранение 5 резервных файлов
 
 LOG_FREQUENT_STATUS = get_config_value('logging', 'log_frequent_status', False, bool)
 
-# Flask密钥 (生产环境中请修改)
+# Секретный ключ Flask (измените в продакшене)
 SECRET_KEY = get_config_value('security', 'secret_key', '8f4a9c2e7d1b6f3a5e8d7c9b2a4f6e3d5c8b7a9f2e4d6c8b3a5f7e9d1c2b4a6')
-FLASK_SECRET_KEY = SECRET_KEY  # Flask应用密钥
+FLASK_SECRET_KEY = SECRET_KEY  # Секретный ключ приложения Flask
 
-# 密码哈希配置
+# Конфигурация хеширования паролей
 PASSWORD_HASH_ROUNDS = get_config_value('security', 'password_hash_rounds', 3, int)
-SESSION_TIMEOUT = get_config_value('security', 'session_timeout', 3600, int)  # 1小时
+SESSION_TIMEOUT = get_config_value('security', 'session_timeout', 3600, int)  # 1 час
 
-# 默认管理员账户
+# Учетная запись администратора по умолчанию
 DEFAULT_ADMIN = {
     'username': get_config_value('admin', 'username', 'admin'),
     'password': get_config_value('admin', 'password', 'admin123')
 }
 
-# ==================== NTRIP协议配置 ====================
+# ==================== Конфигурация протокола NTRIP ====================
 
 
 SUPPORTED_NTRIP_VERSIONS = get_config_value('ntrip', 'supported_versions', ['1.0', '2.0'], list)
 
 DEFAULT_NTRIP_VERSION = get_config_value('ntrip', 'default_version', '1.0')
 MAX_USER_CONNECTIONS_PER_MOUNT = get_config_value('ntrip', 'max_user_connections_per_mount', 3000, int)
-MAX_USERS_PER_MOUNT = get_config_value('ntrip', 'max_users_per_mount', 3000, int)  # 每个挂载点每个用户的最大连接数
-MAX_CONNECTIONS_PER_USER = get_config_value('ntrip', 'max_connections_per_user', 3, int)  # 每个用户的最大连接数
-MOUNT_TIMEOUT = get_config_value('ntrip', 'mount_timeout', 1800, int)  # 30分钟
-CLIENT_TIMEOUT = get_config_value('ntrip', 'client_timeout', 300, int)  # 5分钟
-CONNECTION_TIMEOUT = get_config_value('ntrip', 'connection_timeout', 1800, int)  # 连接超时时间 (秒)
+MAX_USERS_PER_MOUNT = get_config_value('ntrip', 'max_users_per_mount', 3000, int)  # Максимальное количество подключений для каждого пользователя на каждой точке монтирования
+MAX_CONNECTIONS_PER_USER = get_config_value('ntrip', 'max_connections_per_user', 3, int)  # Максимальное количество подключений для каждого пользователя
+MOUNT_TIMEOUT = get_config_value('ntrip', 'mount_timeout', 1800, int)  # 30 минут
+CLIENT_TIMEOUT = get_config_value('ntrip', 'client_timeout', 300, int)  # 5 минут
+CONNECTION_TIMEOUT = get_config_value('ntrip', 'connection_timeout', 1800, int)  # Таймаут подключения (секунды)
 
-# ==================== TCP配置 ====================
+# ==================== Конфигурация TCP ====================
 
-# TCP Keep-Alive配置
+# Конфигурация TCP Keep-Alive
 TCP_KEEPALIVE = {
     'enabled': get_config_value('tcp', 'keepalive_enabled', True, bool),
-    'idle': get_config_value('tcp', 'keepalive_idle', 60, int),      # 开始发送keep-alive探测前的空闲时间
-    'interval': get_config_value('tcp', 'keepalive_interval', 10, int),  # keep-alive探测间隔
-    'count': get_config_value('tcp', 'keepalive_count', 3, int)       # 最大keep-alive探测次数
+    'idle': get_config_value('tcp', 'keepalive_idle', 60, int),      # Время простоя перед началом отправки keep-alive зондов
+    'interval': get_config_value('tcp', 'keepalive_interval', 10, int),  # Интервал keep-alive зондов
+    'count': get_config_value('tcp', 'keepalive_count', 3, int)       # Максимальное количество keep-alive зондов
 }
 SOCKET_TIMEOUT = get_config_value('tcp', 'socket_timeout', 120, int)
 
-# ==================== 数据转发配置 ====================
+# ==================== Конфигурация пересылки данных ====================
 
-# 环形缓冲区配置
-RING_BUFFER_SIZE = get_config_value('data_forwarding', 'ring_buffer_size', 60, int)  # 缓冲区大小
+# Конфигурация кольцевого буфера
+RING_BUFFER_SIZE = get_config_value('data_forwarding', 'ring_buffer_size', 60, int)  # Размер буфера
 
-BROADCAST_INTERVAL = get_config_value('data_forwarding', 'broadcast_interval', 0.01, float)  # 广播间隔 (秒)
+BROADCAST_INTERVAL = get_config_value('data_forwarding', 'broadcast_interval', 0.01, float)  # Интервал рассылки (секунды)
 
-DATA_SEND_TIMEOUT = get_config_value('data_forwarding', 'data_send_timeout', 5, int)  # 数据发送超时时间（秒）
+DATA_SEND_TIMEOUT = get_config_value('data_forwarding', 'data_send_timeout', 5, int)  # Таймаут отправки данных (секунды)
 
-CLIENT_HEALTH_CHECK_INTERVAL = get_config_value('data_forwarding', 'client_health_check_interval', 120, int)  # 客户端健康检查间隔（秒）
+CLIENT_HEALTH_CHECK_INTERVAL = get_config_value('data_forwarding', 'client_health_check_interval', 120, int)  # Интервал проверки здоровья клиента (секунды)
 
-# ==================== RTCM解析 ====================
+# ==================== Парсинг RTCM ====================
 
-# RTCM解析间隔（秒）
+# Интервал парсинга RTCM (секунды)
 RTCM_PARSE_INTERVAL = get_config_value('rtcm', 'parse_interval', 5, int)
 
-# RTCM缓冲区大小
+# Размер буфера RTCM
 RTCM_BUFFER_SIZE = get_config_value('rtcm', 'buffer_size', 1000, int)
 
-# RTCM数据解析时长（秒）- 用于修正STR表
+# Длительность парсинга данных RTCM (секунды) - используется для исправления таблицы STR
 RTCM_PARSE_DURATION = get_config_value('rtcm', 'parse_duration', 30, int)
 
-# RTCM消息类型描述字典
+# Словарь описаний типов сообщений RTCM
 RTCM_MESSAGE_DESCRIPTIONS = {
     1001: "L1-Only GPS RTK Observables",
     1002: "Extended L1-Only GPS RTK Observables", 
@@ -273,24 +273,24 @@ RTCM_MESSAGE_DESCRIPTIONS = {
     1127: "BeiDou MSM7"
 }
 
-# ==================== Web界面配置 ====================
+# ==================== Конфигурация Web интерфейса ====================
 
-# WebSocket配置
+# Конфигурация WebSocket
 WEBSOCKET_CONFIG = {
-    # 'cors_allowed_origins': get_config_value('websocket', 'cors_allowed_origins', '*'),  # 已移除CORS功能
+    # 'cors_allowed_origins': get_config_value('websocket', 'cors_allowed_origins', '*'),  # Функция CORS удалена
     'ping_timeout': get_config_value('websocket', 'ping_timeout', 120, int),
     'ping_interval': get_config_value('websocket', 'ping_interval', 15, int)
 }
 WEBSOCKET_ENABLED = get_config_value('websocket', 'enabled', True, bool)
 
-# 实时数据推送间隔 (秒)
+# Интервал рассылки данных в реальном времени (секунды)
 REALTIME_PUSH_INTERVAL = get_config_value('web', 'realtime_push_interval', 3, int)
 
 
 PAGE_REFRESH_INTERVAL = get_config_value('web', 'page_refresh_interval', 30, int)
 
-# ==================== 预留 ====================
-# 支付二维码URL
+# ==================== Резерв ====================
+# URL QR-кодов для оплаты
 PAYMENT_QR_CODES = {
     'alipay': get_config_value('payment', 'alipay_qr_code', ''),
     'wechat': get_config_value('payment', 'wechat_qr_code', '')
@@ -299,7 +299,7 @@ PAYMENT_QR_CODES = {
 ALIPAY_QR_URL = PAYMENT_QR_CODES['alipay']
 WECHAT_QR_URL = PAYMENT_QR_CODES['wechat']
 
-# 线程池配置
+# Конфигурация пула потоков
 THREAD_POOL_SIZE = get_config_value('performance', 'thread_pool_size', 5000, int)
 MAX_WORKERS = get_config_value('performance', 'max_workers', 5000, int)
 CONNECTION_QUEUE_SIZE = get_config_value('performance', 'connection_queue_size', 5000, int)
@@ -311,71 +311,71 @@ CPU_WARNING_THRESHOLD = get_config_value('performance', 'cpu_warning_threshold',
 MEMORY_WARNING_THRESHOLD = get_config_value('performance', 'memory_warning_threshold', 80, int)
 
 def load_from_env():
-    """从环境变量加载配置"""
+    """Загрузка конфигурации из переменных окружения"""
     global NTRIP_PORT, WEB_PORT, DEBUG, DATABASE_PATH
     
-    # NTRIP端口
+    # NTRIP порт
     if 'NTRIP_PORT' in os.environ:
         try:
             NTRIP_PORT = int(os.environ['NTRIP_PORT'])
         except ValueError:
             pass
     
-    # Web端口
+    # Web порт
     if 'WEB_PORT' in os.environ:
         try:
             WEB_PORT = int(os.environ['WEB_PORT'])
         except ValueError:
             pass
     
-    # 调试模式
+    # Режим отладки
     if 'DEBUG' in os.environ:
         DEBUG = os.environ['DEBUG'].lower() in ('true', '1', 'yes', 'on')
     
-    # 数据库路径
+    # Путь к базе данных
     if 'DATABASE_PATH' in os.environ:
         DATABASE_PATH = os.environ['DATABASE_PATH']
     
-    # 密钥
+    # Секретный ключ
     if 'SECRET_KEY' in os.environ:
         global SECRET_KEY
         SECRET_KEY = os.environ['SECRET_KEY']
 
-# ==================== 配置验证 ====================
+# ==================== Проверка конфигурации ====================
 
 def validate_config():
-    """验证配置参数的有效性"""
+    """Проверка валидности параметров конфигурации"""
     errors = []
     
-    # 验证端口范围
+    # Проверка диапазона портов
     if not (1024 <= NTRIP_PORT <= 65535):
-        errors.append(f"NTRIP端口 {NTRIP_PORT} 不在有效范围内 (1024-65535)")
+        errors.append(f"NTRIP порт {NTRIP_PORT} не в допустимом диапазоне (1024-65535)")
     
     if not (1024 <= WEB_PORT <= 65535):
-        errors.append(f"Web端口 {WEB_PORT} 不在有效范围内 (1024-65535)")
+        errors.append(f"Web порт {WEB_PORT} не в допустимом диапазоне (1024-65535)")
     
-    # 验证缓冲区大小
+    # Проверка размера буфера
     if BUFFER_SIZE <= 0 or BUFFER_SIZE > MAX_BUFFER_SIZE:
-        errors.append(f"缓冲区大小 {BUFFER_SIZE} 无效")
+        errors.append(f"Размер буфера {BUFFER_SIZE} недействителен")
     
-    # 验证日志目录
+    # Проверка директории логов
     if not os.path.exists(LOG_DIR):
         try:
             os.makedirs(LOG_DIR)
         except Exception as e:
-            errors.append(f"无法创建日志目录 {LOG_DIR}: {e}")
+            errors.append(f"Невозможно создать директорию логов {LOG_DIR}: {e}")
     
     return errors
 
 
 def init_config():
-    """初始化配置"""
+    """Инициализация конфигурации"""
     
     load_from_env()
     
     errors = validate_config()
     if errors:
-        # print("配置验证失败:")
+        # print("Проверка конфигурации не прошла:")
     # for error in errors:
     #     print(f"  - {error}")
         return False
@@ -383,7 +383,7 @@ def init_config():
     return True
 
 def get_config_dict():
-    """获取配置字典，用于调试"""
+    """Получение словаря конфигурации для отладки"""
     return {
         'version': VERSION,
         'app_name': APP_NAME,
@@ -400,4 +400,3 @@ def get_config_dict():
         'ring_buffer_size': RING_BUFFER_SIZE,
         'rtcm_parse_interval': RTCM_PARSE_INTERVAL
     }
-    #雪碧+咖啡=不好喝~！

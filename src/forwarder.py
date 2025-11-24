@@ -11,7 +11,7 @@ from . import logger
 from . import connection
 
 class RingBuffer:
-    """环形缓冲区"""
+    """Кольцевой буфер"""
     def __init__(self, maxlen=None):
         self.maxlen = maxlen or config.RING_BUFFER_SIZE
         self.buffer = deque(maxlen=self.maxlen)
@@ -23,7 +23,7 @@ class RingBuffer:
         self._read_index = 0
         
     def append(self, data, timestamp=None):
-        """添加数据到环形缓冲区"""
+        """Добавление данных в кольцевой буфер"""
         if timestamp is None:
             timestamp = time.time()
             
@@ -41,7 +41,7 @@ class RingBuffer:
             self._write_index += 1
                 
     def get_since(self, timestamp):
-        """获取指定时间戳之后的数据"""
+        """Получение данных после указанной временной метки"""
         with self.lock:
             if not self.buffer:
                 return []
@@ -54,7 +54,7 @@ class RingBuffer:
             return result
     
     def get_latest(self, count=None):
-        """获取最新的数据"""
+        """Получение последних данных"""
         with self.lock:
             if not self.buffer:
                 return []
@@ -66,7 +66,7 @@ class RingBuffer:
                 return [(item['timestamp'], item['data']) for item in items]
     
     def get_range(self, start_index, end_index=None):
-        """根据索引范围获取数据"""
+        """Получение данных по диапазону индексов"""
         with self.lock:
             if not self.buffer:
                 return []
@@ -80,7 +80,7 @@ class RingBuffer:
             return result
     
     def get_stats(self):
-        """获取缓冲区统计信息"""
+        """Получение статистики буфера"""
         with self.lock:
             return {
                 'size': len(self.buffer),
@@ -94,7 +94,7 @@ class RingBuffer:
             }
     
     def clear(self):
-        """清空缓冲区"""
+        """Очистка буфера"""
         with self.lock:
             self.buffer.clear()
             self.total_bytes = 0
@@ -103,17 +103,17 @@ class RingBuffer:
             self._read_index = 0
     
     def is_full(self):
-        """检查缓冲区是否已满"""
+        """Проверка заполненности буфера"""
         with self.lock:
             return len(self.buffer) >= self.maxlen
     
     def is_empty(self):
-        """检查缓冲区是否为空"""
+        """Проверка пустоты буфера"""
         with self.lock:
             return len(self.buffer) == 0
 
 class SimpleDataForwarder:
-    """简化的数据广播"""
+    """Упрощенная рассылка данных"""
     
     def __init__(self, buffer_maxlen=None, broadcast_interval=None):
         self.buffer_maxlen = buffer_maxlen or config.RING_BUFFER_SIZE
@@ -141,34 +141,34 @@ class SimpleDataForwarder:
         }
     
     def start(self):
-        """启动广播线程"""
+        """Запуск потока рассылки"""
         if self.running:
             return
             
         self.running = True
         self.broadcast_thread = threading.Thread(target=self._broadcast_loop, daemon=True)
         self.broadcast_thread.start()
-        logger.log_system_event('数据转发器已启动')
+        logger.log_system_event('Пересылка данных запущена')
     
     def stop(self):
-        """停止广播线程"""
+        """Остановка потока рассылки"""
         self.running = False
         
         if self.broadcast_thread and self.broadcast_thread.is_alive():
             self.broadcast_thread.join(timeout=5)
         
-        # 关闭所有客户端连接
+        # Закрытие всех подключений клиентов
         with self.client_lock:
             for mount_clients in self.clients.values():
                 for client_info in mount_clients[:]:
                     self._close_client(client_info)
                     
-        logger.log_system_event('数据转发器已停止')
+        logger.log_system_event('Пересылка данных остановлена')
     
     def add_client(self, client_socket, user, mount, agent, addr, protocol_version, connection_id=None):
-        """添加客户端连接（同步方式）"""
+        """Добавление подключения клиента (синхронный способ)"""
         try:
-            # 启用TCP Keep-Alive
+            # Включение TCP Keep-Alive
             self._enable_keepalive(client_socket)
             
             client_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -191,7 +191,7 @@ class SimpleDataForwarder:
             }
             
             with self.client_lock:
-                # 限制同用户同挂载点的连接数
+                # Ограничение количества подключений одного пользователя к одной точке монтирования
                 if mount not in self.clients:
                     self.clients[mount] = []
                 
@@ -210,7 +210,7 @@ class SimpleDataForwarder:
             return client_info
             
         except Exception as e:
-            logger.log_error(f"添加客户端失败: {e}", exc_info=True)
+            logger.log_error(f"Ошибка при добавлении клиента: {e}", exc_info=True)
             try:
                 client_socket.close()
             except:
@@ -218,7 +218,7 @@ class SimpleDataForwarder:
             raise
     
     def _enable_keepalive(self, client_socket):
-        """TCP Keep-Alive"""
+        """Настройка TCP Keep-Alive"""
         try:
             if not config.TCP_KEEPALIVE['enabled']:
                 return
@@ -233,11 +233,11 @@ class SimpleDataForwarder:
                     client_socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_KEEPINTVL, config.TCP_KEEPALIVE['interval'])
                 if hasattr(socket, 'TCP_KEEPCNT'):
                     client_socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_KEEPCNT, config.TCP_KEEPALIVE['count'])
-                # 移除频繁的debug日志
-                # logger.log_debug(f"TCP Keep-Alive已启用: idle={config.TCP_KEEPALIVE['idle']}s", 'ntrip')
+                # Удалены частые debug логи
+                # logger.log_debug(f"TCP Keep-Alive включен: idle={config.TCP_KEEPALIVE['idle']}s", 'ntrip')
             except OSError:
-                # 移除频繁的debug日志
-                # logger.log_debug("TCP Keep-Alive已启用（使用系统默认参数）", 'ntrip')
+                # Удалены частые debug логи
+                # logger.log_debug("TCP Keep-Alive включен (используются системные параметры по умолчанию)", 'ntrip')
                 pass
             
             
@@ -245,10 +245,10 @@ class SimpleDataForwarder:
             client_socket.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, config.BUFFER_SIZE)
             
         except Exception as e:
-            logger.log_warning(f"设置TCP Keep-Alive失败: {e}", 'ntrip')
+            logger.log_warning(f"Ошибка при настройке TCP Keep-Alive: {e}", 'ntrip')
     
     def remove_client(self, client_info):
-        """移除客户端连接"""
+        """Удаление подключения клиента"""
         try:
             self._close_client(client_info)
             
@@ -277,18 +277,18 @@ class SimpleDataForwarder:
             )
             
         except Exception as e:
-            logger.log_error(f"移除客户端失败: {e}", exc_info=True)
+            logger.log_error(f"Ошибка при удалении клиента: {e}", exc_info=True)
     
     def _close_client(self, client_info):
-        """关闭客户端连接"""
+        """Закрытие подключения клиента"""
         try:
             socket_obj = client_info['socket']
             socket_obj.close()
         except Exception as e:
-            logger.log_debug(f"关闭客户端连接失败: {e}", 'ntrip')
+            logger.log_debug(f"Ошибка при закрытии подключения клиента: {e}", 'ntrip')
     
     def upload_data(self, mount, data_chunk):
-        """上传数据到指定挂载点"""
+        """Загрузка данных в указанную точку монтирования"""
         timestamp = time.time()
         
         if mount not in self.mount_buffers:
@@ -302,7 +302,7 @@ class SimpleDataForwarder:
         try:
             connection.update_mount_data_stats(mount, len(data_chunk))
         except Exception as e:
-            logger.log_error(f"更新挂载点 {mount} 数据统计时发生错误: {e}")
+            logger.log_error(f"Ошибка при обновлении статистики данных точки монтирования {mount}: {e}")
     
     def create_mount_buffer(self, mount):
         with self.buffer_lock:
@@ -321,19 +321,19 @@ class SimpleDataForwarder:
             return False
     
     def _broadcast_loop(self):
-        """广播循环"""
-        logger.log_system_event('数据广播循环开始运行')
+        """Цикл рассылки"""
+        logger.log_system_event('Цикл рассылки данных начал работу')
         
         while self.running:
             try:
                 self._broadcast_data()
                 time.sleep(self.broadcast_interval)
             except Exception as e:
-                logger.log_error(f"广播循环异常: {e}", exc_info=True)
+                logger.log_error(f"Исключение в цикле рассылки: {e}", exc_info=True)
                 time.sleep(1)
     
     def _broadcast_data(self):
-        """广播数据到所有客户端"""
+        """Рассылка данных всем клиентам"""
         with self.buffer_lock:
             mount_items = list(self.mount_buffers.items())
         
@@ -344,22 +344,22 @@ class SimpleDataForwarder:
                     self._send_data_to_clients(clients, buffer, mount_name)
     
     def _send_data_to_clients(self, clients, buffer, mount_name):
-        """发送数据到客户端列表"""
+        """Отправка данных списку клиентов"""
         disconnected_clients = []
         
         for client_info in clients:
             try:
                 self._send_to_client(client_info, buffer)
             except Exception as e:
-                logger.log_warning(f"发送数据到客户端失败 ({client_info['addr']}): {e}", 'ntrip')
+                logger.log_warning(f"Ошибка при отправке данных клиенту ({client_info['addr']}): {e}", 'ntrip')
                 disconnected_clients.append(client_info)
         
-        # 清理断开的连接
+        # Очистка разорванных подключений
         for client_info in disconnected_clients:
             self.remove_client(client_info)
     
     def _send_to_client(self, client_info, buffer):
-        """发送数据到单个客户端"""
+        """Отправка данных одному клиенту"""
         try:
             
             last_sent_timestamp = client_info['last_sent_timestamp']
@@ -381,7 +381,7 @@ class SimpleDataForwarder:
                     self.stats['total_messages_sent'] += len(new_data)
                     
                     if client_info.get('connection_id'):
-                        # 静默更新用户活动，不产生日志
+                        # Тихие обновления активности пользователя, без генерации логов
                         connection.update_user_activity(
                             client_info['user'], 
                             client_info['connection_id'], 
@@ -389,13 +389,13 @@ class SimpleDataForwarder:
                         )
         
         except Exception as e:
-            # 只在非网络错误时记录警告日志
+            # Записываем предупреждения только для ошибок, не связанных с сетью
             if "Connection" not in str(e) and "Broken pipe" not in str(e):
-                logger.log_warning(f"发送数据到客户端失败 ({client_info['addr']}): {e}", 'ntrip')
+                logger.log_warning(f"Ошибка при отправке данных клиенту ({client_info['addr']}): {e}", 'ntrip')
             raise
     
     def _send_data_simple(self, client_info, data_list):
-        """简单的数据发送方法"""
+        """Простой метод отправки данных"""
         try:
             socket_obj = client_info['socket']
             protocol_version = client_info['protocol_version']
@@ -403,13 +403,13 @@ class SimpleDataForwarder:
             
             for timestamp, data in data_list:
                 if protocol_version == 'ntrip2_0':
-                    # NTRIP 2.0 使用分块编码
+                    # NTRIP 2.0 использует кодировку фрагментами
                     chunk_size = hex(len(data))[2:].upper().encode('ascii')
                     chunk_data = chunk_size + b'\r\n' + data + b'\r\n'
                     socket_obj.sendall(chunk_data)
                     total_bytes_sent += len(chunk_data)
                 else:
-                    # NTRIP 1.0 直接发送
+                    # NTRIP 1.0 отправляет напрямую
                     socket_obj.sendall(data)
                     total_bytes_sent += len(data)
             
@@ -421,7 +421,7 @@ class SimpleDataForwarder:
             raise
     
     def get_stats(self):
-        """获取转发器统计信息"""
+        """Получение статистики пересылки данных"""
         with self.buffer_lock, self.client_lock:
             buffer_stats = {}
             for mount, buffer in self.mount_buffers.items():
@@ -434,7 +434,7 @@ class SimpleDataForwarder:
             }
     
     def get_client_info(self, mount=None):
-        """获取客户端信息"""
+        """Получение информации о клиентах"""
         with self.client_lock:
             if mount:
                 return self.clients.get(mount, [])
@@ -444,7 +444,7 @@ class SimpleDataForwarder:
 
     
     def force_disconnect_user(self, username):
-        """强制断开指定用户的所有连接"""
+        """Принудительное отключение всех подключений указанного пользователя"""
         disconnected_count = 0
         clients_to_remove = []
         
@@ -458,15 +458,15 @@ class SimpleDataForwarder:
             try:
                 self.remove_client(client_info)
                 disconnected_count += 1
-                logger.log_info(f"强制断开用户 {username} 的连接: {client_info['mount']}")
+                logger.log_info(f"Принудительно отключен пользователь {username} от точки монтирования: {client_info['mount']}")
             except Exception as e:
-                logger.log_error(f"强制断开用户 {username} 连接失败: {e}")
+                logger.log_error(f"Ошибка при принудительном отключении пользователя {username}: {e}")
         
-        logger.log_info(f"强制断开用户 {username} 完成，共断开 {disconnected_count} 个连接")
+        logger.log_info(f"Принудительное отключение пользователя {username} завершено, отключено подключений: {disconnected_count}")
         return disconnected_count > 0
     
     def force_disconnect_mount(self, mount_name):
-        """强制断开指定挂载点的所有连接"""
+        """Принудительное отключение всех подключений к указанной точке монтирования"""
         disconnected_count = 0
         
         with self.client_lock:
@@ -477,76 +477,76 @@ class SimpleDataForwarder:
                     try:
                         self.remove_client(client_info)
                         disconnected_count += 1
-                        logger.log_info(f"强制断开挂载点 {mount_name} 的用户连接: {client_info['user']}")
+                        logger.log_info(f"Принудительно отключен пользователь {client_info['user']} от точки монтирования {mount_name}")
                     except Exception as e:
-                        logger.log_error(f"强制断开挂载点 {mount_name} 用户连接失败: {e}")
+                        logger.log_error(f"Ошибка при принудительном отключении пользователя от точки монтирования {mount_name}: {e}")
         
         try:
             self.remove_mount_buffer(mount_name)
-            logger.log_info(f"移除挂载点 {mount_name} 的数据缓冲区")
+            logger.log_info(f"Удален буфер данных точки монтирования {mount_name}")
         except Exception as e:
-            logger.log_error(f"移除挂载点 {mount_name} 缓冲区失败: {e}")
-        logger.log_info(f"强制断开挂载点 {mount_name} 完成，共断开 {disconnected_count} 个用户连接")
+            logger.log_error(f"Ошибка при удалении буфера точки монтирования {mount_name}: {e}")
+        logger.log_info(f"Принудительное отключение точки монтирования {mount_name} завершено, отключено пользователей: {disconnected_count}")
         return True
     
     def register_subscriber(self, mount_name, socket_write_end):
-        """注册数据订阅者（用于RTCM解析等）"""
+        """Регистрация подписчика данных (для парсинга RTCM и т.д.)"""
         with self.subscriber_lock:
             if mount_name not in self.subscribers:
                 self.subscribers[mount_name] = []
             self.subscribers[mount_name].append(socket_write_end)
-            logger.log_debug(f"添加解析线程订阅挂载点 {mount_name}", 'ntrip')
-            logger.log_info(f"[DEBUG] 注册解析线程订阅 [挂载点: {mount_name}, 订阅者数: {len(self.subscribers[mount_name])}]")
+            logger.log_debug(f"Добавлена подписка потока парсинга на точку монтирования {mount_name}", 'ntrip')
+            logger.log_info(f"[DEBUG] Зарегистрирована подписка потока парсинга [Точка монтирования: {mount_name}, Количество подписчиков: {len(self.subscribers[mount_name])}]")
     
     def unregister_subscriber(self, mount_name, socket_write_end):
-        """注销数据订阅者"""
+        """Отмена регистрации подписчика данных"""
         with self.subscriber_lock:
             if mount_name in self.subscribers:
                 try:
                     self.subscribers[mount_name].remove(socket_write_end)
                     if not self.subscribers[mount_name]:
                         del self.subscribers[mount_name]
-                    logger.log_debug(f"关闭解析线程订阅从挂载点 {mount_name}", 'ntrip')
+                    logger.log_debug(f"Закрыта подписка потока парсинга на точку монтирования {mount_name}", 'ntrip')
                 except ValueError:
-                    pass 
+                    pass
     
     def _send_to_subscribers(self, mount_name: str, data_chunk: bytes):
-        """向订阅者发送数据"""
-        # logger.log_debug(f"[FORWARDER] 正在向 {mount_name} 发送数据，订阅者数量: {len(self.subscribers.get(mount_name, []))}")
+        """Отправка данных подписчикам"""
+        # logger.log_debug(f"[FORWARDER] Отправка данных в {mount_name}, количество подписчиков: {len(self.subscribers.get(mount_name, []))}")
         with self.subscriber_lock:
             if mount_name in self.subscribers:
                 subscribers_to_remove = []
                 subscriber_count = len(self.subscribers[mount_name])
-                # logger.log_debug(f"[DEBUG] 向挂载点 {mount_name} 的 {subscriber_count} 个订阅者发送数据 ({len(data_chunk)} 字节)", 'ntrip')
+                # logger.log_debug(f"[DEBUG] Отправка данных {subscriber_count} подписчикам точки монтирования {mount_name} ({len(data_chunk)} байт)", 'ntrip')
                 
                 if subscriber_count > 0:
-                     # logger.log_info(f"[DEBUG] 发送RTCM数据 [挂载点: {mount_name}, 订阅者: {subscriber_count}, 数据长度: {len(data_chunk)}]", 'ntrip')
+                     # logger.log_info(f"[DEBUG] Отправка данных RTCM [Точка монтирования: {mount_name}, Подписчиков: {subscriber_count}, Длина данных: {len(data_chunk)}]", 'ntrip')
                      pass
                 
                 for i, subscriber in enumerate(self.subscribers[mount_name]):
                     try:
-                        # 检查订阅者类型，socket对象使用send方法，文件对象使用write方法
+                        # Проверка типа подписчика, для объектов socket используется метод send, для файловых объектов - write
                         if hasattr(subscriber, 'send'):
-                            # socket对象
+                            # Объект socket
                             subscriber.send(data_chunk)
                         elif hasattr(subscriber, 'write'):
-                            # 文件对象
+                            # Файловый объект
                             subscriber.write(data_chunk)
                             subscriber.flush()
                         else:
-                            raise AttributeError(f"订阅者对象不支持数据发送: {type(subscriber)}")
+                            raise AttributeError(f"Объект подписчика не поддерживает отправку данных: {type(subscriber)}")
                         
-                        # if i == 0:  # 只记录第一个订阅者的成功发送
-                        #     logger.log_debug(f"[DEBUG] 成功发送到订阅者 #{i+1} [挂载点: {mount_name}]", 'ntrip')
+                        # if i == 0:  # Записывать только успешную отправку первому подписчику
+                        #     logger.log_debug(f"[DEBUG] Успешная отправка подписчику #{i+1} [Точка монтирования: {mount_name}]", 'ntrip')
                     except Exception as e:
-                        logger.log_error(f"向解析线程订阅者 #{i+1} 发送数据失败 [挂载点: {mount_name}]: {e}", 'ntrip')
+                        logger.log_error(f"Ошибка при отправке данных подписчику потока парсинга #{i+1} [Точка монтирования: {mount_name}]: {e}", 'ntrip')
                         subscribers_to_remove.append(subscriber)
                 
-                # 移除失效的订阅者
+                # Удаление недействительных подписчиков
                 for subscriber in subscribers_to_remove:
                     try:
                         self.subscribers[mount_name].remove(subscriber)
-                        logger.log_warning(f"[DEBUG] 移除解析线程失效订阅者 [挂载点: {mount_name}]", 'ntrip')
+                        logger.log_warning(f"[DEBUG] Удален недействительный подписчик потока парсинга [Точка монтирования: {mount_name}]", 'ntrip')
                     except ValueError:
                         pass
             
@@ -556,69 +556,69 @@ class SimpleDataForwarder:
 
 forwarder = SimpleDataForwarder()
 
-# 全局管理函数 扩容管理端
+# Глобальные функции управления для расширения управления
 def initialize():
-    """初始化数据转发器"""
-    logger.log_system_event('数据转发器已初始化')
+    """Инициализация пересылки данных"""
+    logger.log_system_event('Пересылка данных инициализирована')
     return forwarder
 
 def get_forwarder():
-    """获取全局数据转发器实例"""
+    """Получение глобального экземпляра пересылки данных"""
     return forwarder
 
 def start_forwarder():
-    """启动数据转发器"""
+    """Запуск пересылки данных"""
     forwarder.start()
 
 def stop_forwarder():
-    """停止数据转发器"""
+    """Остановка пересылки данных"""
     forwarder.stop()
 
 
 def add_client(client_socket, user, mount, agent, addr, protocol_version, connection_id=None):
-    """同步添加客户端（兼容原接口）"""
+    """Синхронное добавление клиента (совместимость с оригинальным интерфейсом)"""
     try:
         return forwarder.add_client(client_socket, user, mount, agent, addr, protocol_version, connection_id)
     except Exception as e:
-        logger.log_error(f"添加客户端超时: {e}", 'ntrip')
+        logger.log_error(f"Таймаут при добавлении клиента: {e}", 'ntrip')
         raise
 
 def remove_client(client_info):
-    """移除客户端"""
+    """Удаление клиента"""
     return forwarder.remove_client(client_info)
 
 def upload_data(mount, data_chunk):
-    """上传数据"""
+    """Загрузка данных"""
     return forwarder.upload_data(mount, data_chunk)
 
 def create_mount_buffer(mount):
-    """创建挂载点缓冲区"""
+    """Создание буфера точки монтирования"""
     return forwarder.create_mount_buffer(mount)
 
 def remove_mount_buffer(mount):
-    """移除挂载点缓冲区"""
+    """Удаление буфера точки монтирования"""
     return forwarder.remove_mount_buffer(mount)
 
 def get_stats():
-    """获取统计信息"""
+    """Получение статистики"""
     return forwarder.get_stats()
 
 def get_client_info(mount=None):
-    """获取客户端信息"""
+    """Получение информации о клиентах"""
     return forwarder.get_client_info(mount)
 
 def force_disconnect_user(username):
-    """强制断开指定用户的所有连接"""
+    """Принудительное отключение всех подключений указанного пользователя"""
     return forwarder.force_disconnect_user(username)
 
 def force_disconnect_mount(mount_name):
-    """强制断开挂载点"""
+    """Принудительное отключение точки монтирования"""
     return forwarder.force_disconnect_mount(mount_name)
 
 def register_subscriber(mount_name, socket_write_end):
-    """注册数据订阅者"""
+    """Регистрация подписчика данных"""
     return forwarder.register_subscriber(mount_name, socket_write_end)
 
 def unregister_subscriber(mount_name, socket_write_end):
-    """注销数据订阅者"""
+    """Отмена регистрации подписчика данных"""
     return forwarder.unregister_subscriber(mount_name, socket_write_end)

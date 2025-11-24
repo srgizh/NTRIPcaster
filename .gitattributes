@@ -1,1 +1,13 @@
 * text eol=lf
+
+# Бинарные файлы изображений - не обрабатывать как текст
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.svg binary
+*.webp binary
+*.bmp binary
+*.tiff binary
+*.tif binary

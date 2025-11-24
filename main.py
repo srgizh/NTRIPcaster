@@ -12,20 +12,20 @@ import os
 from pathlib import Path
 from threading import Thread
 
-# 解析命令行参数
+# Парсинг аргументов командной строки
 parser = argparse.ArgumentParser(description='2RTK NTRIP Caster')
-parser.add_argument('--config', type=str, help='配置文件路径')
+parser.add_argument('--config', type=str, help='Путь к файлу конфигурации')
 args = parser.parse_args()
 
-# 添加项目根目录到Python路径
+# Добавление корневой директории проекта в путь Python
 project_root = Path(__file__).parent
 sys.path.insert(0, str(project_root))
 
-# 如果指定了配置文件，设置环境变量
+# Если указан файл конфигурации, установить переменную окружения
 if args.config:
     os.environ['NTRIP_CONFIG_FILE'] = args.config
 
-# 导入配置和核心模块
+# Импорт модулей конфигурации и ядра
 from src import config
 from src import logger
 from src import forwarder
@@ -35,20 +35,20 @@ from src.ntrip import NTRIPCaster
 from src.connection import get_connection_manager
 
 def setup_logging():
-    """设置日志系统"""
-    # 初始化日志模块
+    """Настройка системы логирования"""
+    # Инициализация модуля логирования
     logger.init_logging()
     
-    # 设置特定模块的日志级别
+    # Установка уровней логирования для определенных модулей
     logging.getLogger('werkzeug').setLevel(logging.WARNING)
     logging.getLogger('socketio').setLevel(logging.WARNING)
     logging.getLogger('engineio').setLevel(logging.WARNING)
     
-    # 记录系统启动日志
-    logger.log_system_event('日志系统初始化完成')
+    # Запись системного лога запуска
+    logger.log_system_event('Система логирования инициализирована')
 
 def print_banner():
-    """打印启动横幅"""
+    """Вывод баннера запуска"""
     banner = f"""
 
     ██████╗ ██████╗ ████████╗██╗  ██╗
@@ -59,22 +59,22 @@ def print_banner():
     ╚══════╝╚═╝  ╚═╝   ╚═╝   ╚═╝  ╚═╝
     2RTK Ntrip Caster {config.VERSION}
 
-NTRIP端口: {config.NTRIP_PORT:<8} Web管理端口: {config.WEB_PORT:<8} 
-调试模式: {str(config.DEBUG):<9} 最大连接: {config.MAX_CONNECTIONS:<8} 
+Порт NTRIP: {config.NTRIP_PORT:<8} Порт Web-управления: {config.WEB_PORT:<8} 
+Режим отладки: {str(config.DEBUG):<9} Максимум подключений: {config.MAX_CONNECTIONS:<8} 
 
     """
     print(banner)
 
 def check_environment():
-    """检查运行环境"""
+    """Проверка рабочей среды"""
     logger = logging.getLogger('main')
     
-    # 检查Python版本
+    # Проверка версии Python
     if sys.version_info < (3, 7):
-        logger.error("需要Python 3.7或更高版本")
+        logger.error("Требуется Python 3.7 или выше")
         sys.exit(1)
     
-    # 检查必要的目录
+    # Проверка необходимых директорий
     required_dirs = [
         Path(config.DATABASE_PATH).parent,
         Path(config.LOG_DIR)
@@ -82,10 +82,10 @@ def check_environment():
     
     for dir_path in required_dirs:
         if not dir_path.exists():
-            logger.info(f"创建目录: {dir_path}")
+            logger.info(f"Создание директории: {dir_path}")
             dir_path.mkdir(parents=True, exist_ok=True)
     
-    # 检查端口是否可用
+    # Проверка доступности портов
     import socket
     
     def check_port(port, name):
@@ -94,7 +94,7 @@ def check_environment():
                 s.bind(('', port))
             return True
         except OSError:
-            logger.error(f"{name}端口 {port} 已被占用")
+            logger.error(f"Порт {name} {port} уже занят")
             return False
     
     ports_ok = True
@@ -102,13 +102,13 @@ def check_environment():
     ports_ok &= check_port(config.WEB_PORT, "Web")
     
     if not ports_ok:
-        logger.error("端口检查失败，请检查端口占用情况")
+        logger.error("Проверка портов не пройдена, проверьте занятость портов")
         sys.exit(1)
     
-    logger.info("环境检查通过")
+    logger.info("Проверка среды пройдена")
 
 class ServiceManager:
-    """服务管理器 - 统一管理所有服务组件"""
+    """Менеджер сервисов - унифицированное управление всеми сервисными компонентами"""
     
     def __init__(self):
         self.db_manager = None
@@ -116,69 +116,69 @@ class ServiceManager:
         self.ntrip_caster = None
         self.web_thread = None
         self.running = False
-        self.stopping = False  # 添加停止标志位，防止重复调用
+        self.stopping = False  # Добавление флага остановки, чтобы предотвратить повторные вызовы
         self.start_time = None
         self.stats_thread = None
-        self.stats_interval = 10  # 统计打印间隔（秒）
+        self.stats_interval = 10  # Интервал вывода статистики (секунды)
         self.last_network_stats = None
-        self.print_stats = False  # 控制是否在控制台打印统计信息
-        self.system_stats_cache = {}  # 缓存系统统计数据供Web API使用
+        self.print_stats = False  # Управление выводом статистики в консоль
+        self.system_stats_cache = {}  # Кеш системной статистики для Web API
         
     def start_all_services(self):
-        """启动所有服务"""
+        """Запуск всех сервисов"""
         try:
             self.start_time = time.time()
-            logger.log_system_event(f'启动2RTK NTRIP Caster v{config.VERSION}')
+            logger.log_system_event(f'Запуск 2RTK NTRIP Caster v{config.VERSION}')
             
-            # 1. 初始化数据库
+            # 1. Инициализация базы данных
             self.db_manager = DatabaseManager()
             self.db_manager.init_database()
-            logger.log_system_event('数据库初始化完成')
+            logger.log_system_event('База данных инициализирована')
             
-            # 2. 初始化并启动数据转发器
+            # 2. Инициализация и запуск пересылки данных
             forwarder.initialize()
             forwarder.start_forwarder()
-            logger.log_system_event('数据转发器初始化完成')
+            logger.log_system_event('Пересылка данных инициализирована')
             
-            # 3. RTCM解析现在集成在connection_manager中，无需单独启动
-            logger.log_system_event('RTCM解析器集成完成')
+            # 3. Парсинг RTCM теперь интегрирован в connection_manager, не требует отдельного запуска
+            logger.log_system_event('Парсер RTCM интегрирован')
             
-            # 4. 启动Web管理界面
+            # 4. Запуск веб-интерфейса управления
             self._start_web_interface()
             
-            # 5. 启动NTRIP服务器（在单独线程中）
+            # 5. Запуск NTRIP сервера (в отдельном потоке)
             self.ntrip_caster = NTRIPCaster(self.db_manager)
             self.ntrip_thread = threading.Thread(target=self.ntrip_caster.start, daemon=True)
             self.ntrip_thread.start()
-            time.sleep(1)  # 等待NTRIP服务器启动
+            time.sleep(1)  # Ожидание запуска NTRIP сервера
             
-            # 6. 注册信号处理
+            # 6. Регистрация обработчиков сигналов
             signal.signal(signal.SIGINT, self._signal_handler)
             signal.signal(signal.SIGTERM, self._signal_handler)
             
             self.running = True
-            logger.log_system_event(f'所有服务已启动 - NTRIP端口: {config.NTRIP_PORT}, Web端口: {config.WEB_PORT}')
+            logger.log_system_event(f'Все сервисы запущены - Порт NTRIP: {config.NTRIP_PORT}, Порт Web: {config.WEB_PORT}')
             
-            # 启动统计监控线程
+            # Запуск потока мониторинга статистики
             self._start_stats_monitor()
             
-            # 主循环 - 保持服务运行
+            # Главный цикл - поддержание работы сервисов
             self._main_loop()
             
         except Exception as e:
-            logger.log_error(f"启动服务失败: {e}", exc_info=True)
+            logger.log_error(f"Ошибка при запуске сервисов: {e}", exc_info=True)
             self.stop_all_services()
             raise
     
     def _start_web_interface(self):
-        """启动Web管理界面"""
+        """Запуск веб-интерфейса управления"""
         from src.web import set_server_instance
         self.web_manager = create_web_manager(
             self.db_manager, 
             forwarder.get_forwarder(), 
             self.start_time
         )
-        # 设置服务器实例供Web API使用
+        # Установка экземпляра сервера для использования в Web API
         set_server_instance(self)
         self.web_manager.start_rtcm_parsing()
         
@@ -188,61 +188,61 @@ class ServiceManager:
         self.web_thread = Thread(target=run_web, daemon=True)
         self.web_thread.start()
         
-        # 显示所有可访问的Web管理界面地址
-        web_urls = config.get_display_urls(config.WEB_PORT, "Web管理界面")
+        # Отображение всех доступных адресов веб-интерфейса управления
+        web_urls = config.get_display_urls(config.WEB_PORT, "Веб-интерфейс управления")
         if len(web_urls) == 1:
-            logger.log_info(f'Web管理界面已启动，管理地址: {web_urls[0]}')
+            logger.log_info(f'Веб-интерфейс управления запущен, адрес управления: {web_urls[0]}')
         else:
-            logger.log_system_event('Web管理界面已启动，可通过以下地址访问:')
+            logger.log_system_event('Веб-интерфейс управления запущен, доступен по следующим адресам:')
             for url in web_urls:
                 logger.log_system_event(f'  - {url}')
     
     def _start_stats_monitor(self):
-        """启动统计监控线程"""
+        """Запуск потока мониторинга статистики"""
         self.stats_thread = Thread(target=self._stats_monitor_worker, daemon=True)
         self.stats_thread.start()
  
     def _stats_monitor_worker(self):
-        """统计监控工作线程"""
+        """Рабочий поток мониторинга статистики"""
         while self.running:
             try:
                 time.sleep(self.stats_interval)
                 if self.running:
                     self._update_system_stats()
             except Exception as e:
-                logger.log_error(f"统计监控异常: {e}", exc_info=True)
+                logger.log_error(f"Исключение в мониторинге статистики: {e}", exc_info=True)
     
     def _update_system_stats(self):
-        """更新系统统计信息到缓存"""
+        """Обновление системной статистики в кеше"""
         try:
-            # 获取系统性能数据
+            # Получение данных производительности системы
             cpu_percent = psutil.cpu_percent(interval=1)
             memory = psutil.virtual_memory()
             
-            # 获取网络统计
+            # Получение сетевой статистики
             network_stats = psutil.net_io_counters()
             network_bandwidth = self._calculate_network_bandwidth(network_stats)
             
-            # 获取NTRIP服务器统计
+            # Получение статистики NTRIP сервера
             ntrip_stats = self.ntrip_caster.get_performance_stats() if self.ntrip_caster else {}
             
-            # 获取连接管理器统计
+            # Получение статистики менеджера подключений
             conn_manager = get_connection_manager()
             conn_stats = conn_manager.get_statistics()
             
-            # 计算运行时间
+            # Расчет времени работы
             uptime = time.time() - self.start_time if self.start_time else 0
             uptime_str = self._format_uptime(uptime)
             
-            # 计算数据传输统计
+            # Расчет статистики передачи данных
             total_data_bytes = sum(mount['total_bytes'] for mount in conn_stats.get('mounts', []) if 'total_bytes' in mount)
             total_data_mb = total_data_bytes / (1024 * 1024)
             
-            # 更新缓存
+            # Обновление кеша
             self.system_stats_cache = {
                 'timestamp': time.strftime('%Y-%m-%d %H:%M:%S'),
-                'uptime': uptime,  # 保存数字格式的运行时间
-                'uptime_str': uptime_str,  # 保存格式化的运行时间字符串
+                'uptime': uptime,  # Сохранение времени работы в числовом формате
+                'uptime_str': uptime_str,  # Сохранение форматированной строки времени работы
                 'cpu_percent': cpu_percent,
                 'memory': memory,
                 'network_bandwidth': network_bandwidth,
@@ -252,27 +252,27 @@ class ServiceManager:
             }
             
         except Exception as e:
-            logger.log_error(f"更新统计信息失败: {e}", exc_info=True)
+            logger.log_error(f"Ошибка при обновлении статистики: {e}", exc_info=True)
     
 
     
     def get_system_stats(self):
-        """获取系统统计数据供Web API使用"""
+        """Получение системной статистики для использования в Web API"""
         try:
             stats = self.system_stats_cache.copy()
             if not stats:
-                # 如果缓存为空，立即更新一次
+                # Если кеш пуст, немедленно обновить один раз
                 self._update_system_stats()
                 stats = self.system_stats_cache.copy()
             
-            # 格式化数据供前端使用
+            # Форматирование данных для использования фронтендом
             if stats:
                 memory_info = stats.get('memory')
                 network_info = stats.get('network_bandwidth', {})
                 
                 return {
                     'timestamp': stats.get('timestamp'),
-                    'uptime': stats.get('uptime', 0),  # 返回数字格式的运行时间
+                    'uptime': stats.get('uptime', 0),  # Возврат времени работы в числовом формате
                     'cpu_percent': round(stats.get('cpu_percent', 0), 1),
                     'memory': {
                         'percent': round(getattr(memory_info, 'percent', 0), 1),
@@ -297,29 +297,29 @@ class ServiceManager:
                 }
             return {}
         except Exception as e:
-            logger.log_error(f"获取系统统计数据失败: {e}", exc_info=True)
+            logger.log_error(f"Ошибка при получении системной статистики: {e}", exc_info=True)
             return {}
     
     def set_print_stats(self, enabled):
-        """设置是否在控制台打印统计信息"""
+        """Установка вывода статистики в консоль"""
         self.print_stats = enabled
         if enabled:
-            logger.log_system_event('已启用控制台统计信息打印')
+            logger.log_system_event('Вывод статистики в консоль включен')
         else:
-            logger.log_system_event('已禁用控制台统计信息打印')
+            logger.log_system_event('Вывод статистики в консоль отключен')
     
     def _calculate_network_bandwidth(self, current_stats):
-        """计算网络带宽"""
+        """Расчет сетевой пропускной способности"""
         if self.last_network_stats is None:
             self.last_network_stats = (current_stats, time.time())
-            return "计算中..."
+            return "Вычисление..."
         
         last_stats, last_time = self.last_network_stats
         current_time = time.time()
         time_diff = current_time - last_time
         
         if time_diff <= 0:
-            return "计算中..."
+            return "Вычисление..."
         
         bytes_sent_diff = current_stats.bytes_sent - last_stats.bytes_sent
         bytes_recv_diff = current_stats.bytes_recv - last_stats.bytes_recv
@@ -330,134 +330,134 @@ class ServiceManager:
         
         self.last_network_stats = (current_stats, current_time)
         
-        return f"↑{upload_mbps:.2f} Mbps ↓{download_mbps:.2f} Mbps (总计: {total_mbps:.2f} Mbps)"
+        return f"↑{upload_mbps:.2f} Mbps ↓{download_mbps:.2f} Mbps (Итого: {total_mbps:.2f} Mbps)"
     
     def _format_uptime(self, seconds):
-        """格式化运行时间"""
+        """Форматирование времени работы"""
         days = int(seconds // 86400)
         hours = int((seconds % 86400) // 3600)
         minutes = int((seconds % 3600) // 60)
         secs = int(seconds % 60)
         
         if days > 0:
-            return f"{days}天 {hours}小时 {minutes}分钟"
+            return f"{days} дн. {hours} ч. {minutes} мин."
         elif hours > 0:
-            return f"{hours}小时 {minutes}分钟"
+            return f"{hours} ч. {minutes} мин."
         else:
-            return f"{minutes}分钟 {secs}秒"
+            return f"{minutes} мин. {secs} сек."
 
     def _main_loop(self):
-        """主循环 - 监控服务状态"""
+        """Главный цикл - мониторинг состояния сервисов"""
         while self.running:
             try:
-                # 检查各服务状态
+                # Проверка состояния каждого сервиса
                 if self.ntrip_caster and not self.ntrip_caster.running:
-                    logger.log_error('NTRIP服务器意外停止')
+                    logger.log_error('NTRIP сервер неожиданно остановлен')
                     break
                     
                 if self.web_thread and not self.web_thread.is_alive():
-                    logger.log_error('Web服务意外停止')
+                    logger.log_error('Web сервис неожиданно остановлен')
                     break
                 
-                # 短暂休眠避免CPU占用过高
+                # Короткая пауза для избежания высокой загрузки CPU
                 time.sleep(1)
                 
             except Exception as e:
-                logger.log_error(f"主循环异常: {e}", exc_info=True)
+                logger.log_error(f"Исключение в главном цикле: {e}", exc_info=True)
                 break
     
     def _signal_handler(self, signum, frame):
-        """信号处理器"""
+        """Обработчик сигналов"""
         if self.stopping:
-            logger.log_system_event(f'收到信号 {signum}，但服务正在关闭中，忽略重复信号')
+            logger.log_system_event(f'Получен сигнал {signum}, но сервисы уже закрываются, игнорируем повторный сигнал')
             return
-        logger.log_system_event(f'收到信号 {signum}，开始关闭所有服务')
+        logger.log_system_event(f'Получен сигнал {signum}, начинаем закрытие всех сервисов')
         self.stop_all_services()
     
     def stop_all_services(self):
-        """停止所有服务"""
+        """Остановка всех сервисов"""
         if self.stopping:
-            logger.log_system_event('服务正在关闭中，避免重复调用')
+            logger.log_system_event('Сервисы уже закрываются, избегаем повторного вызова')
             return
             
         self.stopping = True
-        logger.log_system_event('正在关闭所有服务')
+        logger.log_system_event('Закрытие всех сервисов')
         
         try:
             self.running = False
             
-            # 等待统计监控线程结束
+            # Ожидание завершения потока мониторинга статистики
             if self.stats_thread and self.stats_thread.is_alive():
-                logger.log_system_event('正在停止统计监控线程')
+                logger.log_system_event('Остановка потока мониторинга статистики')
                 self.stats_thread.join(timeout=2)
             
-            # 停止NTRIP服务器
+            # Остановка NTRIP сервера
             if self.ntrip_caster:
                 try:
                     self.ntrip_caster.stop()
                 except Exception as e:
-                    logger.log_error(f'停止NTRIP服务器时出错: {e}')
+                    logger.log_error(f'Ошибка при остановке NTRIP сервера: {e}')
         
-            # 停止数据转发器
+            # Остановка пересылки данных
             try:
                 forwarder.stop_forwarder()
             except Exception as e:
-                logger.log_error(f'停止数据转发器时出错: {e}')
+                logger.log_error(f'Ошибка при остановке пересылки данных: {e}')
             
-            # 停止Web管理器
+            # Остановка Web менеджера
             if self.web_manager:
                 try:
                     self.web_manager.stop_rtcm_parsing()
                 except Exception as e:
-                    logger.log_error(f'停止Web管理器时出错: {e}')
+                    logger.log_error(f'Ошибка при остановке Web менеджера: {e}')
             
-            logger.log_system_event('所有服务已关闭')
+            logger.log_system_event('Все сервисы закрыты')
             
         except Exception as e:
-            logger.log_error(f'关闭服务时发生异常: {e}')
+            logger.log_error(f'Исключение при закрытии сервисов: {e}')
         finally:
-            # 确保停止标志位被重置（虽然程序即将退出）
+            # Убедиться, что флаг остановки сброшен (хотя программа скоро завершится)
             self.stopping = False
 
-# 全局服务器实例
+# Глобальный экземпляр сервера
 server = None
 
 def get_server_instance():
-    """获取服务器实例"""
+    """Получение экземпляра сервера"""
     return server
 
 def main():
-    """主函数"""
+    """Главная функция"""
     global server
     try:
-        # 设置日志
+        # Настройка логирования
         setup_logging()
         main_logger = logger.get_logger('main')
         
-        # 打印启动信息
+        # Вывод информации о запуске
         print_banner()
         
-        # 检查环境
+        # Проверка среды
         check_environment()
         
-        # 初始化配置
+        # Инициализация конфигурации
         config.init_config()
-        logger.log_system_event('配置初始化完成')
+        logger.log_system_event('Конфигурация инициализирована')
         
-        # 创建服务器实例并启动所有服务
+        # Создание экземпляра сервера и запуск всех сервисов
         server = ServiceManager()
-        globals()['server'] = server  # 设置全局变量
+        globals()['server'] = server  # Установка глобальной переменной
         server.start_all_services()
         
     except KeyboardInterrupt:
-        logger.log_system_event('收到中断信号，正在关闭服务')
+        logger.log_system_event('Получен сигнал прерывания, закрываем сервисы')
     except Exception as e:
-        logger.log_error(f"启动失败: {e}", exc_info=True)
+        logger.log_error(f"Ошибка запуска: {e}", exc_info=True)
         sys.exit(1)
     finally:
         if server:
             server.stop_all_services()
-        logger.log_system_event('程序已退出')
+        logger.log_system_event('Программа завершена')
         logger.shutdown_logging()
 
 if __name__ == '__main__':
