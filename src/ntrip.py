@@ -1340,53 +1340,30 @@ a=control:*
             content_str = '\r\n'.join(content_lines) + '\r\n' if content_lines else '\r\n'
             log_debug(f"Длина содержимого списка точек монтирования: {len(content_str)}")
             
-            if self.ntrip_version == "2.0":
-                # NTRIP 2.0 формат - использовать стандартный HTTP ответ
-                current_time = datetime.utcnow().strftime('%a, %d %b %Y %H:%M:%S GMT')
-                
-                # Построить HTTP заголовки ответа
-                response_lines = [
-                    "HTTP/1.1 200 OK",
-                    f"Server: NTRIP 2RTK caster {config.APP_VERSION}",
-                    f"Date: {current_time}",
-                    "Ntrip-Version: Ntrip/2.0",
-                    f"Content-Length: {len(content_str.encode('utf-8'))}",
-                    "Content-Type: text/plain",
-                    "Connection: close",
-                    "",  # Пустая строка разделяет заголовки и содержимое
-                    content_str
-                ]
-                
-                response = '\r\n'.join(response_lines)
-                try:
-                    self.client_socket.send(response.encode('utf-8'))
-                    log_debug(f"Отправка списка точек монтирования в формате NTRIP 2.0 на {self.client_address}")
-                except Exception as e:
-                    logger.log_error(f"Не удалось отправить список точек монтирования NTRIP 2.0: {e}", exc_info=True)
-            else:
-                # NTRIP 1.0 формат - использовать формат SOURCETABLE
-                current_time = datetime.utcnow().strftime('%a, %d %b %Y %H:%M:%S GMT')
-                
-                response_lines = [
-                    "SOURCETABLE 200 OK",
-                    f"Server: NTRIP 2RTK caster {config.APP_VERSION}",
-                    f"Date: {current_time}",
-                    "Ntrip-Version: Ntrip/1.0",
-                    f"Content-Length: {len(content_str.encode('utf-8'))}",
-                    "Content-Type: text/plain",
-                    "Connection: close",
-                    "",  # Пустая строка разделяет заголовки и содержимое
-                    content_str,
-                    "ENDSOURCETABLE"
-                ]
-                
-                response = '\r\n'.join(response_lines)
-                log_debug(f"Содержимое ответа NTRIP 1.0: {repr(response[:200])}...")
-                try:
-                    self.client_socket.send(response.encode('utf-8'))
-                    log_debug(f"Отправка списка точек монтирования в формате NTRIP 1.0 на {self.client_address}")
-                except Exception as e:
-                    logger.log_error(f"Не удалось отправить список точек монтирования NTRIP 1.0: {e}", exc_info=True)
+            # Для совместимости с «капризными» роверами всегда отправляем SOURCETABLE 200 OK (формат NTRIP 1.0).
+            # Многие клиенты, даже заявляя поддержку NTRIP 2.0, ожидают именно этот формат списка.
+            current_time = datetime.utcnow().strftime('%a, %d %b %Y %H:%M:%S GMT')
+            
+            response_lines = [
+                "SOURCETABLE 200 OK",
+                f"Server: NTRIP 2RTK caster {config.APP_VERSION}",
+                f"Date: {current_time}",
+                "Ntrip-Version: Ntrip/1.0",
+                f"Content-Length: {len(content_str.encode('utf-8'))}",
+                "Content-Type: text/plain",
+                "Connection: close",
+                "",  # Пустая строка разделяет заголовки и содержимое
+                content_str,
+                "ENDSOURCETABLE"
+            ]
+            
+            response = '\r\n'.join(response_lines)
+            log_debug(f"Содержимое ответа SOURCETABLE: {repr(response[:200])}...")
+            try:
+                self.client_socket.send(response.encode('utf-8'))
+                log_debug(f"Отправлен список точек монтирования (формат SOURCETABLE) на {self.client_address}")
+            except Exception as e:
+                logger.log_error(f"Не удалось отправить список точек монтирования (SOURCETABLE): {e}", exc_info=True)
             
             log_debug(f"Отправка списка точек монтирования на {self.client_address}")
         
