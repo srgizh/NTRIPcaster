@@ -1410,23 +1410,34 @@ a=control:*
     
     def send_download_success_response(self):
         """Отправить ответ об успешном скачивании"""
-        if self.ntrip_version == "2.0":
-            # Для NTRIP 2.0 обязательно нужно добавить заголовок Ntrip-Version
-            # Исправление: Content-Type должен быть gnss/data согласно стандарту
-            headers = ["Connection: close", "Ntrip-Version: NTRIP/2.0"]
-            self._send_response(
-                "HTTP/1.1 200 OK",
-                content_type="gnss/data",
-                additional_headers=headers
-            )
-        else:
-            # NTRIP 1.0 формат - принудительно поддерживать соединение, игнорировать Connection: close от клиента
-            try:
-                response = "ICY 200 OK\r\nConnection: keep-alive\r\n\r\n"
-                self.client_socket.send(response.encode('utf-8'))
-                logger.log_debug(f"Ответ NTRIP 1.0 о скачивании отправлен, поддерживаем длительное соединение: {self.client_address}", 'ntrip')
-            except Exception as e:
-                logger.log_error(f"Не удалось отправить ответ об успешном скачивании: {e}", exc_info=True)
+        # Принудительно используем формат NTRIP 1.0 (ICY 200 OK) даже для запросов NTRIP 2.0.
+        # Это решает проблемы совместимости с роверами, которые заявляют поддержку 2.0,
+        # но по факту ожидают старый формат ответа и сырой поток данных.
+        try:
+            response = "ICY 200 OK\r\nConnection: close\r\n\r\n"
+            self.client_socket.send(response.encode('utf-8'))
+            logger.log_debug(f"Отправлен принудительный ответ ICY 200 OK для {self.client_address}", 'ntrip')
+        except Exception as e:
+            logger.log_error(f"Не удалось отправить ответ об успешной загрузке: {e}", exc_info=True)
+            
+        # Старая логика NTRIP 2.0 (закомментирована для совместимости)
+        # if self.ntrip_version == "2.0":
+        #     # Для NTRIP 2.0 обязательно нужно добавить заголовок Ntrip-Version
+        #     # Исправление: Content-Type должен быть gnss/data согласно стандарту
+        #     headers = ["Connection: close", "Ntrip-Version: NTRIP/2.0"]
+        #     self._send_response(
+        #         "HTTP/1.1 200 OK",
+        #         content_type="gnss/data",
+        #         additional_headers=headers
+        #     )
+        # else:
+        #     # NTRIP 1.0 формат - принудительно поддерживать соединение, игнорировать Connection: close от клиента
+        #     try:
+        #         response = "ICY 200 OK\r\nConnection: keep-alive\r\n\r\n"
+        #         self.client_socket.send(response.encode('utf-8'))
+        #         logger.log_debug(f"Ответ NTRIP 1.0 о скачивании отправлен, поддерживаем длительное соединение: {self.client_address}", 'ntrip')
+        #     except Exception as e:
+        #         logger.log_error(f"Не удалось отправить ответ об успешном скачивании: {e}", exc_info=True)
     
     def send_auth_challenge(self, message="Authentication required", auth_type="both"):
         """Отправить запрос на аутентификацию"""
