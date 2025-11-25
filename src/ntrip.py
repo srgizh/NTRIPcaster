@@ -8,6 +8,7 @@ ntrip.py - NTRIP Caster основной модуль
 import sys
 import time
 import socket
+import errno
 import logging
 import threading
 import base64
@@ -1245,11 +1246,26 @@ a=control:*
                     connection.get_connection_manager().update_mount_data_stats(mount, len(data))
                     
                 except OSError as e:
+                    # Безопасная обработка ошибок сокета для кроссплатформенности
+                    # На Windows может быть winerror, на Linux/Unix - только errno
+                    error_code = None
+                    if hasattr(e, 'errno') and e.errno is not None:
+                        error_code = e.errno
+                    elif hasattr(e, 'winerror') and e.winerror is not None:
+                        error_code = e.winerror
                     
-                    if e.winerror == 10038:  #10038 
+                    # EBADF (9) - Bad file descriptor (Linux/Unix)
+                    # 10038 - WSAENOTSOCK на Windows (некорректный дескриптор сокета)
+                    is_socket_closed = (
+                        error_code == errno.EBADF or 
+                        error_code == 10038 or
+                        str(e).startswith('Bad file descriptor')
+                    )
+                    
+                    if is_socket_closed:
                         logger.log_debug(f"Сокет точки монтирования {mount} закрыт, прекращаем прием данных", 'ntrip')
                     else:
-                        logger.log_error(f"Ошибка сокета точки монтирования {mount}: {e}", 'ntrip')
+                        logger.log_error(f"Ошибка сокета точки монтирования {mount}: {e} (код: {error_code})", 'ntrip')
                     break
                 except socket.timeout:
                     logger.log_debug(f"Таймаут приема данных точки монтирования {mount}", 'ntrip')
