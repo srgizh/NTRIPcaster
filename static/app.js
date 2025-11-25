@@ -259,7 +259,7 @@ let mapSwitched = false;
 let currentMountName = null;
 
 function startRTCMParsing(mountName) {
-    console.log(`[前端] 开始启动RTCM解析: ${mountName}`);
+    console.log(`[Frontend] Начало запуска парсинга RTCM: ${mountName}`);
     
     // 
     fetch('/api/mount/rtcm-parse/status')
@@ -267,17 +267,17 @@ function startRTCMParsing(mountName) {
     .then(statusData => {
         if (statusData.success) {
             const status = statusData.status;
-            console.log(`[前端] 当前解析器状态:`, status);
-            console.log(`[前端] 当前活跃Web挂载点: ${status.current_web_mount || '无'}`);
-            console.log(`[前端] Web解析线程数: ${status.web_parsers}, STR解析线程数: ${status.str_parsers}`);
+            console.log(`[Frontend] Текущее состояние парсера:`, status);
+            console.log(`[Frontend] Текущая активная Web точка монтирования: ${status.current_web_mount || 'нет'}`);
+            console.log(`[Frontend] Потоков парсинга Web: ${status.web_parsers}, потоков парсинга STR: ${status.str_parsers}`);
             
             if (status.current_web_mount && status.current_web_mount !== mountName) {
-                console.log(`[前端] 检测到前一个活跃挂载点: ${status.current_web_mount}，将被自动清理`);
+                console.log(`[Frontend] Обнаружена предыдущая активная точка монтирования: ${status.current_web_mount}, будет автоматически очищена`);
             }
         }
     })
     .catch(error => {
-        console.warn(`[前端] 获取解析器状态失败:`, error);
+        console.warn(`[Frontend] Не удалось получить состояние парсера:`, error);
     });
     
     // Reset marking status for new mount point
@@ -293,7 +293,7 @@ function startRTCMParsing(mountName) {
     initializeSatelliteVisualization();
     
     // Call backend API to start RTCM parsing
-    console.log(`[前端] 调用后端API启动RTCM解析: ${mountName}`);
+    console.log(`[Frontend] Вызов backend API для запуска парсинга RTCM: ${mountName}`);
     fetch(`/api/mount/${mountName}/rtcm-parse/start`, {
         method: 'POST',
         headers: {
@@ -303,25 +303,25 @@ function startRTCMParsing(mountName) {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            console.log(`[前端] RTCM解析启动成功: ${mountName}`);
+            console.log(`[Frontend] Парсинг RTCM успешно запущен: ${mountName}`);
             // 
             setTimeout(() => {
                 fetch('/api/mount/rtcm-parse/status')
                 .then(response => response.json())
                 .then(statusData => {
                     if (statusData.success) {
-                        console.log(`[前端] 启动后解析器状态:`, statusData.status);
+                        console.log(`[Frontend] Состояние парсера после запуска:`, statusData.status);
                     }
                 })
-                .catch(error => console.warn(`[前端] 获取启动后状态失败:`, error));
+                .catch(error => console.warn(`[Frontend] Не удалось получить состояние после запуска:`, error));
             }, 1000);
         } else {
-            console.error(`[前端] RTCM解析启动失败: ${data.error || 'Unknown error'}`);
+            console.error(`[Frontend] Не удалось запустить парсинг RTCM: ${data.error || 'Unknown error'}`);
             showAlert(`Failed to start RTCM parsing: ${data.error || 'Unknown error'}`, 'error');
         }
     })
     .catch(error => {
-        console.error('[前端] 调用RTCM解析API失败:', error);
+        console.error('[Frontend] Не удалось вызвать API парсинга RTCM:', error);
         showAlert('Failed to call RTCM parsing API', 'error');
     });
 }
@@ -444,7 +444,7 @@ function displayStationInfo(stationData) {
     const stationInfoDiv = document.getElementById('station-info');
     stationInfoDiv.innerHTML = `
         <div class="station-details">
-            <!-- 第一行：基本信息 -->
+            <!-- Первая строка: основная информация -->
             <div class="info-row-group">
                 <div class="info-row">
                     <span class="info-label">Mount Point:</span>
@@ -464,7 +464,7 @@ function displayStationInfo(stationData) {
                 </div>
             </div>
             
-            <!-- 第二行：设备信息 -->
+            <!-- Вторая строка: информация об устройстве -->
             <div class="info-row-group">
                 <div class="info-row">
                     <span class="info-label">Receiver Type:</span>
@@ -484,7 +484,7 @@ function displayStationInfo(stationData) {
                 </div>
             </div>
             
-            <!-- 第三行：坐标信息 -->
+            <!-- Третья строка: информация о координатах -->
             <div class="info-row-group coordinates-group">
                 <div class="coordinates-half">
                     <div class="info-row">
@@ -535,17 +535,17 @@ function initializeMap() {
 
 // Initialize map specifically for monitor page
 function initializeMapForMonitor() {
-    console.log('[地图初始化] 开始初始化monitor页面地图');
+    console.log('[Инициализация карты] Начало инициализации карты страницы monitor');
     
     // Check if we're on monitor page and map container exists
     if (currentPage !== 'monitor') {
-        console.log('[地图初始化] 不在monitor页面，跳过地图初始化');
+        console.log('[Инициализация карты] Не на странице monitor, пропустить инициализацию карты');
         return;
     }
     
     const mapContainer = document.getElementById('map');
     if (!mapContainer) {
-        console.log('[地图初始化] 地图容器不存在，跳过初始化');
+        console.log('[Инициализация карты] Контейнер карты не существует, пропустить инициализацию');
         return;
     }
     
@@ -565,22 +565,22 @@ function initializeMapForMonitor() {
         newAmapBtn.addEventListener('click', () => switchToAmap());
         newOsmBtn.addEventListener('click', () => switchToOSM());
         
-        console.log('[地图初始化] 地图切换按钮事件已重新绑定');
+        console.log('[Инициализация карты] События переключения карты переназначены');
     }
     
     // Force re-initialize map
     if (typeof ol !== 'undefined') {
-        console.log('[地图初始化] OpenLayers已加载，直接初始化地图');
+        console.log('[Инициализация карты] OpenLayers загружен, инициализировать карту напрямую');
         initMap();
         
         // If we have previous position data, restore the marker
         if (lastPosition.latitude !== null && lastPosition.longitude !== null) {
-            console.log('[地图初始化] 恢复之前的位置标记:', lastPosition);
+            console.log('[Инициализация карты] Восстановление предыдущей метки позиции:', lastPosition);
             // Force re-marking without distance check
             updateMapLocation(lastPosition.latitude, lastPosition.longitude, currentMountName, false);
         }
     } else {
-        console.log('[地图初始化] OpenLayers未加载，开始加载库');
+        console.log('[Инициализация карты] OpenLayers не загружен, начинаем загрузку библиотеки');
         loadMapLibrary();
     }
 }
@@ -606,18 +606,18 @@ function loadMapLibrary() {
 
 // Initialize map
 function initMap() {
-    console.log('[地图初始化] 开始创建地图实例');
+    console.log('[Инициализация карты] Начало создания экземпляра карты');
     
     // Check if map container exists
     const mapContainer = document.getElementById('map');
     if (!mapContainer) {
-        console.log('[地图初始化] 地图容器不存在，无法创建地图');
+        console.log('[Инициализация карты] Контейнер карты не существует, невозможно создать карту');
         return;
     }
     
     // Clean up existing map
     if (currentMap) {
-        console.log('[地图初始化] 清理现有地图实例');
+        console.log('[Инициализация карты] Очистка существующего экземпляра карты');
         currentMap.setTarget(null);
         currentMap = null;
     }
@@ -641,10 +641,10 @@ function initMap() {
         });
         currentMap.addLayer(markerLayer);
         
-        console.log('[地图初始化] 地图实例创建成功');
+        console.log('[Инициализация карты] Экземпляр карты успешно создан');
         updateMapButtons();
     } catch (error) {
-        console.error('[地图初始化] 创建地图实例失败:', error);
+        console.error('[Инициализация карты] Не удалось создать экземпляр карты:', error);
     }
 }
 
@@ -706,14 +706,14 @@ function updateMapButtons() {
 }
 
 
-// 坐标转换函数：WGS84转GCJ02（火星坐标系）
+// Функция преобразования координат: WGS84 в GCJ02 (марсовая система координат)
 function wgs84ToGcj02(lng, lat) {
     const x_pi = 3.14159265358979324 * 3000.0 / 180.0;
     const pi = 3.1415926535897932384626;
-    const a = 6378245.0; // 长半轴
-    const ee = 0.00669342162296594323; // 扁率
+    const a = 6378245.0; // Большая полуось
+    const ee = 0.00669342162296594323; // Сжатие
     
-    // 判断是否在中国境外
+    // Определить, находится ли координата за пределами Китая
     function outOfChina(lng, lat) {
         return (lng < 72.004 || lng > 137.8347) || (lat < 0.8293 || lat > 55.8271);
     }
@@ -734,7 +734,7 @@ function wgs84ToGcj02(lng, lat) {
         return ret;
     }
     
-    // 如果在中国境外，不进行转换
+    // Если за пределами Китая, не выполнять преобразование
     if (outOfChina(lng, lat)) {
         return [lng, lat];
     }
@@ -755,16 +755,16 @@ function wgs84ToGcj02(lng, lat) {
 function updateMapLocation(latitude, longitude, mountName = null, isInitialMarking = false) {
     if (!currentMap) return;
     
-    // 根据地图类型决定是否进行坐标转换
+    // Определить, нужно ли преобразование координат в зависимости от типа карты
     let displayLng = longitude;
     let displayLat = latitude;
     
-    // 如果是高德地图，需要将WGS84坐标转换为GCJ02坐标
+    // Если используется карта Amap, необходимо преобразовать координаты WGS84 в GCJ02
     if (mapType === 'amap') {
         const converted = wgs84ToGcj02(longitude, latitude);
         displayLng = converted[0];
         displayLat = converted[1];
-        console.log(`[坐标转换] WGS84: ${longitude}, ${latitude} -> GCJ02: ${displayLng}, ${displayLat}`);
+        console.log(`[Преобразование координат] WGS84: ${longitude}, ${latitude} -> GCJ02: ${displayLng}, ${displayLat}`);
     }
     
     const center = ol.proj.fromLonLat([displayLng, displayLat]);
@@ -986,7 +986,7 @@ function updateConstellationChart(constellation, satellites) {
     });
     
     
-    const expireTime = 10000; // 10秒
+    const expireTime = 10000; // 10 секунд
     Object.keys(satelliteData[constellation]).forEach(satName => {
         if (currentTime - satelliteData[constellation][satName].lastUpdate > expireTime) {
             delete satelliteData[constellation][satName];
@@ -1087,10 +1087,10 @@ function updateConstellationChart(constellation, satellites) {
 
 
 function getSignalColor(strength) {
-    if (strength >= 40) return '#4CAF50'; // 绿色 Green
-    if (strength >= 30) return '#FFC107'; // 黄色 Yellow
-    if (strength >= 20) return '#FF9800'; // 橙色 Orange 颜色好像不对~
-    return '#F44336'; // 红色 Red
+    if (strength >= 40) return '#4CAF50'; // Зелёный Green
+    if (strength >= 30) return '#FFC107'; // Жёлтый Yellow
+    if (strength >= 20) return '#FF9800'; // Оранжевый Orange
+    return '#F44336'; // Красный Red
 }
 
 let currentTooltip = null;
@@ -1192,7 +1192,7 @@ function getDashboardContent() {
             <div class="dashboard-timestamp" id="dashboard-timestamp">Loading...</div>
         </div>
         
-        <!-- 系统概览卡片 -->
+        <!-- Карточки обзора системы -->
         <div class="dashboard-cards">
             <div class="dashboard-card">
                 <div class="card-icon">⏰</div>
@@ -1228,7 +1228,7 @@ function getDashboardContent() {
             </div>
         </div>
         
-        <!-- 连接统计 -->
+        <!-- Статистика подключений -->
         <div class="dashboard-section">
             <h4>Connection Statistics</h4>
             <div class="stats-grid">
@@ -1263,7 +1263,7 @@ function getDashboardContent() {
             </div>
         </div>
         
-        <!-- 挂载点详情 -->
+        <!-- Детали точек монтирования -->
         <div class="dashboard-section">
             <h4>Mount Point Details</h4>
             <div class="mounts-container" id="mounts-detail">
@@ -1439,7 +1439,7 @@ function getDashboardContent() {
 // user
 function getUsersContent(users) {
     let usersHtml = users.map(user => {
-        //两种方式 API获取和socket推送 可以备用
+        // Два способа: получение через API и push через socket, можно использовать резервный
         const isOnline = user.online !== undefined ? user.online : (window.onlineUsers && (user.username in window.onlineUsers));
         const statusHtml = isOnline ? 
             '<span style="color: #28a745; font-weight: bold;">● Online</span>' : 
@@ -1502,10 +1502,10 @@ function getUsersContent(users) {
     `;
 }
 
-// 挂载点管理内容
+// Контент управления точками монтирования
 function getMountsContent(mounts) {
     let mountsHtml = mounts.map(mount => {
-        // 优先使用从API获取的在线状态，如果没有则使用WebSocket数据
+        // Приоритетно использовать статус онлайн, полученный через API, если нет - использовать данные WebSocket
         const isOnline = mount.active !== undefined ? mount.active : (window.onlineMounts && (mount.mount in window.onlineMounts));
         const statusHtml = isOnline ? 
             '<span style="color: #28a745; font-weight: bold;">● Online</span>' : 
@@ -1550,7 +1550,7 @@ function getMountsContent(mounts) {
     `;
 }
 
-// RTCM监控内容
+// Контент мониторинга RTCM
 function getMonitorContent() {
     return `
         <div class="page-header">
@@ -1559,9 +1559,9 @@ function getMonitorContent() {
         </div>
         
         <div class="monitor-dashboard">
-            <!-- 主要内容区域 -->
+            <!-- Основная область контента -->
             <div class="monitor-grid">
-                <!-- STR数据表 - 全宽 -->
+                <!-- Таблица данных STR - на всю ширину -->
                 <div class="monitor-card full-width">
                     <div class="card-header">
                         <h4><i class="fas fa-table"></i> STR Data Table</h4>
@@ -1571,7 +1571,7 @@ function getMonitorContent() {
                     </div>
                 </div>
 
-                <!-- 基准站信息 - 全宽 -->
+                <!-- Информация о базовой станции - на всю ширину -->
                 <div class="monitor-card full-width">
                     <div class="card-header">
                         <h4><i class="fas fa-broadcast-tower"></i> Base Station Information</h4>
@@ -1590,7 +1590,7 @@ function getMonitorContent() {
                     </div>
                 </div>
 
-                <!-- 基准站位置 - 全宽 -->
+                <!-- Местоположение базовой станции - на всю ширину -->
                 <div class="monitor-card full-width">
                     <div class="card-header">
                         <h4><i class="fas fa-map-marker-alt"></i> Base Station Location</h4>
@@ -1603,14 +1603,14 @@ function getMonitorContent() {
                                 <p>Waiting for location data...</p>
                             </div>
                             <div id="map-switch" class="map-switch-floating">
-                                <button id="amap-btn" class="btn btn-sm btn-primary">高德地图</button>
+                                <button id="amap-btn" class="btn btn-sm btn-primary">Amap</button>
                                 <button id="osm-btn" class="btn btn-sm btn-secondary">OpenStreetMap</button>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- 卫星数据可视化 - 全宽 -->
+                <!-- Визуализация данных спутников - на всю ширину -->
                 <div class="monitor-card full-width">
                     <div class="card-header">
                         <h4><i class="fas fa-satellite"></i> Satellite Data Visualization</h4>
@@ -1694,7 +1694,7 @@ socket.on('system_stats_update', function(data) {
     }
 });
 
-// 调试RTCM 数据
+// Отладка данных RTCM
 socket.on('rtcm_realtime_data', function(data) {
     // console.log('[前端接收] 收到RTCM实时数据:', data);
     // console.log('[前端接收] 数据类型:', typeof data);
@@ -1731,7 +1731,7 @@ socket.on('rtcm_realtime_data', function(data) {
     try {
         switch (data.data_type) {
             case 'station_position':
-                // 处理基准站位置信息
+                // Обработка информации о местоположении базовой станции
                 if (data.latitude && data.longitude) {
                     // console.log(`收到位置信息: ${data.latitude}, ${data.longitude}`);
                     
@@ -1758,7 +1758,7 @@ socket.on('rtcm_realtime_data', function(data) {
                
                 // console.log('收到卫星信号数据:', data);
                 if (data.gnss && data.sats && Array.isArray(data.sats)) {
-                    // 确保卫星可视化容器已初始化（只在第一次初始化）
+                    // Убедиться, что контейнер визуализации спутников инициализирован (только при первой инициализации)
                     if (currentPage === 'monitor') {
                         const satelliteContainer = document.getElementById('satellite-container');
                         if (satelliteContainer && !satelliteContainer.querySelector('.constellation-container')) {
@@ -1801,7 +1801,7 @@ socket.on('rtcm_realtime_data', function(data) {
                 // console.log('[地理信息调试] 收到地理位置信息:', data);
     // console.log('[地理信息调试] 当前页面:', currentPage);
                 
-                // 只在monitor页面处理基准站信息显示
+                // Обрабатывать отображение информации о базовой станции только на странице monitor
                 if (currentPage !== 'monitor') {
                     // console.log('[地理信息调试] 不在monitor页面，跳过基准站信息显示');
                     break;
@@ -1815,7 +1815,7 @@ socket.on('rtcm_realtime_data', function(data) {
     // console.log('[地理信息调试] 是否有station-details:', stationInfoDiv ? stationInfoDiv.querySelector('.station-details') : 'station-info不存在');
                 
                 if (stationInfoDiv && (stationInfoDiv.querySelector('.empty-state') || !stationInfoDiv.querySelector('.station-details'))) {
-                    // 如果还是空状态，先创建基础结构
+                    // Если всё ещё пустое состояние, сначала создать базовую структуру
                     // console.log('[地理信息调试] 检测到empty-state，创建基础结构');
                     const stationData = {
                         name: data.mount_name || data.mount || 'Unknown',
@@ -1834,7 +1834,7 @@ socket.on('rtcm_realtime_data', function(data) {
                     // console.log('[地理信息调试] 准备显示基准站信息:', stationData);
                     displayStationInfo(stationData);
                 } else {
-                    // 如果结构已存在，直接更新数据
+                    // Если структура уже существует, обновить данные напрямую
                     // console.log('[地理信息调试] 基础结构已存在，更新数据');
         // console.log('[地理信息调试] 完整数据内容:', data);
                     
@@ -1854,7 +1854,7 @@ socket.on('rtcm_realtime_data', function(data) {
                     if (data.lat !== undefined && data.lon !== undefined) {
                         // console.log('[地理信息调试] 更新经纬度:', data.lat, data.lon);
                         
-                        // 存储当前挂载点名称
+                        // Сохранить имя текущей точки монтирования
                         currentMountName = data.mount_name || data.mount || null;
                         
                         

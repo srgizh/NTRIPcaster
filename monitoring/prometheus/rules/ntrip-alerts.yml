@@ -1,11 +1,11 @@
-# NTRIP Caster 告警规则
-# 定义各种监控指标的告警条件
+# Правила оповещений для NTRIP Caster
+# Определение условий оповещений для различных метрик мониторинга
 
 groups:
-  # NTRIP Caster 应用告警
+  # Оповещения приложения NTRIP Caster
   - name: ntrip-caster.rules
     rules:
-      # 服务可用性告警
+      # Оповещение о доступности службы
       - alert: NTRIPCasterDown
         expr: up{job="ntrip-caster"} == 0
         for: 1m
@@ -13,10 +13,10 @@ groups:
           severity: critical
           service: ntrip-caster
         annotations:
-          summary: "NTRIP Caster服务不可用"
-          description: "NTRIP Caster服务已停止响应超过1分钟"
+          summary: "Служба NTRIP Caster недоступна"
+          description: "Служба NTRIP Caster не отвечает более 1 минуты"
       
-      # 高错误率告警
+      # Оповещение о высокой частоте ошибок
       - alert: NTRIPCasterHighErrorRate
         expr: rate(ntrip_requests_total{status=~"5.."}[5m]) / rate(ntrip_requests_total[5m]) > 0.1
         for: 5m
@@ -24,10 +24,10 @@ groups:
           severity: warning
           service: ntrip-caster
         annotations:
-          summary: "NTRIP Caster错误率过高"
-          description: "NTRIP Caster在过去5分钟内的错误率超过10%"
+          summary: "Высокая частота ошибок NTRIP Caster"
+          description: "Частота ошибок NTRIP Caster превысила 10% за последние 5 минут"
       
-      # 响应时间告警
+      # Оповещение о времени отклика
       - alert: NTRIPCasterHighLatency
         expr: histogram_quantile(0.95, rate(ntrip_request_duration_seconds_bucket[5m])) > 2
         for: 5m
@@ -35,10 +35,10 @@ groups:
           severity: warning
           service: ntrip-caster
         annotations:
-          summary: "NTRIP Caster响应时间过长"
-          description: "NTRIP Caster 95%分位数响应时间超过2秒"
+          summary: "Время отклика NTRIP Caster слишком велико"
+          description: "95-й процентиль времени отклика NTRIP Caster превысил 2 секунды"
       
-      # 连接数告警
+      # Оповещение о количестве подключений
       - alert: NTRIPCasterHighConnections
         expr: ntrip_active_connections > 1000
         for: 5m
@@ -46,10 +46,10 @@ groups:
           severity: warning
           service: ntrip-caster
         annotations:
-          summary: "NTRIP Caster连接数过高"
-          description: "NTRIP Caster当前活跃连接数超过1000"
+          summary: "Количество подключений NTRIP Caster слишком велико"
+          description: "Текущее количество активных подключений NTRIP Caster превысило 1000"
       
-      # 内存使用告警
+      # Оповещение об использовании памяти
       - alert: NTRIPCasterHighMemoryUsage
         expr: process_resident_memory_bytes{job="ntrip-caster"} / 1024 / 1024 > 512
         for: 10m
@@ -57,13 +57,13 @@ groups:
           severity: warning
           service: ntrip-caster
         annotations:
-          summary: "NTRIP Caster内存使用过高"
-          description: "NTRIP Caster内存使用超过512MB"
+          summary: "Использование памяти NTRIP Caster слишком велико"
+          description: "Использование памяти NTRIP Caster превысило 512MB"
 
-  # 系统资源告警
+  # Оповещения о системных ресурсах
   - name: system.rules
     rules:
-      # CPU使用率告警
+      # Оповещение об использовании CPU
       - alert: HighCPUUsage
         expr: 100 - (avg by(instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
         for: 5m
@@ -71,10 +71,10 @@ groups:
           severity: warning
           component: system
         annotations:
-          summary: "CPU使用率过高"
-          description: "实例 {{ $labels.instance }} CPU使用率超过80%"
+          summary: "Использование CPU слишком велико"
+          description: "Использование CPU экземпляра {{ $labels.instance }} превысило 80%"
       
-      # 内存使用率告警
+      # Оповещение об использовании памяти
       - alert: HighMemoryUsage
         expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 85
         for: 5m
@@ -82,10 +82,10 @@ groups:
           severity: warning
           component: system
         annotations:
-          summary: "内存使用率过高"
-          description: "实例 {{ $labels.instance }} 内存使用率超过85%"
+          summary: "Использование памяти слишком велико"
+          description: "Использование памяти экземпляра {{ $labels.instance }} превысило 85%"
       
-      # 磁盘空间告警
+      # Оповещение о дисковом пространстве
       - alert: HighDiskUsage
         expr: (1 - (node_filesystem_avail_bytes{fstype!="tmpfs"} / node_filesystem_size_bytes{fstype!="tmpfs"})) * 100 > 85
         for: 5m
@@ -93,10 +93,10 @@ groups:
           severity: warning
           component: system
         annotations:
-          summary: "磁盘空间不足"
-          description: "实例 {{ $labels.instance }} 磁盘 {{ $labels.mountpoint }} 使用率超过85%"
+          summary: "Дисковое пространство недостаточно"
+          description: "Использование диска экземпляра {{ $labels.instance }} диска {{ $labels.mountpoint }} превысило 85%"
       
-      # 磁盘IO告警
+      # Оповещение о дисковом вводе-выводе
       - alert: HighDiskIO
         expr: rate(node_disk_io_time_seconds_total[5m]) > 0.8
         for: 5m
@@ -104,13 +104,13 @@ groups:
           severity: warning
           component: system
         annotations:
-          summary: "磁盘IO使用率过高"
-          description: "实例 {{ $labels.instance }} 磁盘IO使用率超过80%"
+          summary: "Использование дискового ввода-вывода слишком велико"
+          description: "Использование дискового ввода-вывода экземпляра {{ $labels.instance }} превысило 80%"
 
-  # 容器告警
+  # Оповещения контейнеров
   - name: container.rules
     rules:
-      # 容器重启告警
+      # Оповещение о перезапуске контейнера
       - alert: ContainerRestarted
         expr: increase(container_start_time_seconds[1h]) > 0
         for: 0m
@@ -118,10 +118,10 @@ groups:
           severity: warning
           component: container
         annotations:
-          summary: "容器重启"
-          description: "容器 {{ $labels.name }} 在过去1小时内重启了"
+          summary: "Контейнер перезапущен"
+          description: "Контейнер {{ $labels.name }} был перезапущен за последний час"
       
-      # 容器CPU使用率告警
+      # Оповещение об использовании CPU контейнера
       - alert: ContainerHighCPUUsage
         expr: (rate(container_cpu_usage_seconds_total[5m]) * 100) > 80
         for: 5m
@@ -129,10 +129,10 @@ groups:
           severity: warning
           component: container
         annotations:
-          summary: "容器CPU使用率过高"
-          description: "容器 {{ $labels.name }} CPU使用率超过80%"
+          summary: "Использование CPU контейнера слишком велико"
+          description: "Использование CPU контейнера {{ $labels.name }} превысило 80%"
       
-      # 容器内存使用率告警
+      # Оповещение об использовании памяти контейнера
       - alert: ContainerHighMemoryUsage
         expr: (container_memory_usage_bytes / container_spec_memory_limit_bytes) * 100 > 85
         for: 5m
@@ -140,13 +140,13 @@ groups:
           severity: warning
           component: container
         annotations:
-          summary: "容器内存使用率过高"
-          description: "容器 {{ $labels.name }} 内存使用率超过85%"
+          summary: "Использование памяти контейнера слишком велико"
+          description: "Использование памяти контейнера {{ $labels.name }} превысило 85%"
 
-  # Nginx告警
+  # Оповещения Nginx
   - name: nginx.rules
     rules:
-      # Nginx服务告警
+      # Оповещение о службе Nginx
       - alert: NginxDown
         expr: up{job="nginx"} == 0
         for: 1m
@@ -154,10 +154,10 @@ groups:
           severity: critical
           service: nginx
         annotations:
-          summary: "Nginx服务不可用"
-          description: "Nginx服务已停止响应超过1分钟"
+          summary: "Служба Nginx недоступна"
+          description: "Служба Nginx не отвечает более 1 минуты"
       
-      # Nginx高错误率告警
+      # Оповещение о высокой частоте ошибок Nginx
       - alert: NginxHighErrorRate
         expr: rate(nginx_http_requests_total{status=~"5.."}[5m]) / rate(nginx_http_requests_total[5m]) > 0.1
         for: 5m
@@ -165,13 +165,13 @@ groups:
           severity: warning
           service: nginx
         annotations:
-          summary: "Nginx错误率过高"
-          description: "Nginx在过去5分钟内的5xx错误率超过10%"
+          summary: "Высокая частота ошибок Nginx"
+          description: "Частота ошибок 5xx Nginx превысила 10% за последние 5 минут"
 
-  # Redis告警
+  # Оповещения Redis
   - name: redis.rules
     rules:
-      # Redis服务告警
+      # Оповещение о службе Redis
       - alert: RedisDown
         expr: up{job="redis"} == 0
         for: 1m
@@ -179,10 +179,10 @@ groups:
           severity: critical
           service: redis
         annotations:
-          summary: "Redis服务不可用"
-          description: "Redis服务已停止响应超过1分钟"
+          summary: "Служба Redis недоступна"
+          description: "Служба Redis не отвечает более 1 минуты"
       
-      # Redis内存使用告警
+      # Оповещение об использовании памяти Redis
       - alert: RedisHighMemoryUsage
         expr: redis_memory_used_bytes / redis_memory_max_bytes * 100 > 85
         for: 5m
@@ -190,10 +190,10 @@ groups:
           severity: warning
           service: redis
         annotations:
-          summary: "Redis内存使用率过高"
-          description: "Redis内存使用率超过85%"
+          summary: "Использование памяти Redis слишком велико"
+          description: "Использование памяти Redis превысило 85%"
       
-      # Redis连接数告警
+      # Оповещение о количестве подключений Redis
       - alert: RedisHighConnections
         expr: redis_connected_clients > 100
         for: 5m
@@ -201,13 +201,13 @@ groups:
           severity: warning
           service: redis
         annotations:
-          summary: "Redis连接数过高"
-          description: "Redis当前连接数超过100"
+          summary: "Количество подключений Redis слишком велико"
+          description: "Текущее количество подключений Redis превысило 100"
 
-  # 网络告警
+  # Сетевые оповещения
   - name: network.rules
     rules:
-      # 网络延迟告警
+      # Оповещение о сетевой задержке
       - alert: HighNetworkLatency
         expr: probe_duration_seconds > 1
         for: 5m
@@ -215,10 +215,10 @@ groups:
           severity: warning
           component: network
         annotations:
-          summary: "网络延迟过高"
-          description: "目标 {{ $labels.instance }} 网络延迟超过1秒"
+          summary: "Сетевая задержка слишком велика"
+          description: "Сетевая задержка целевого узла {{ $labels.instance }} превысила 1 секунду"
       
-      # 网络连接失败告警
+      # Оповещение о неудачном сетевом подключении
       - alert: NetworkProbeFailure
         expr: probe_success == 0
         for: 2m
@@ -226,5 +226,5 @@ groups:
           severity: critical
           component: network
         annotations:
-          summary: "网络探测失败"
-          description: "目标 {{ $labels.instance }} 网络探测失败超过2分钟"
+          summary: "Сетевое зондирование не удалось"
+          description: "Сетевое зондирование целевого узла {{ $labels.instance }} не удалось более 2 минут"

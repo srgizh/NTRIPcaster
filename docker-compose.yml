@@ -10,14 +10,14 @@ services:
     hostname: ntrip-caster
     restart: unless-stopped
     ports:
-      - "2101:2101"  # NTRIP服务端口
-      - "5757:5757"  # Web管理端口
+      - "2101:2101"  # Порт службы NTRIP
+      - "5757:5757"  # Порт веб-управления
     volumes:
-      - ntrip-data:/app/data          # 数据持久化
-      - ntrip-logs:/app/logs          # 日志持久化
-      - ntrip-config:/app/config      # 配置文件目录
-      - /etc/localtime:/etc/localtime:ro  # 时区同步
-    # user: "1000:1000"  # 暂时注释，让容器以root启动来设置权限
+      - ntrip-data:/app/data          # Постоянное хранение данных
+      - ntrip-logs:/app/logs          # Постоянное хранение логов
+      - ntrip-config:/app/config      # Директория файлов конфигурации
+      - /etc/localtime:/etc/localtime:ro  # Синхронизация часового пояса
+    # user: "1000:1000"  # Временно закомментировано, чтобы контейнер запускался от root для установки прав
     environment:
       - PYTHONUNBUFFERED=1
       - PYTHONDONTWRITEBYTECODE=1
@@ -56,7 +56,7 @@ services:
           memory: 256M
           cpus: '0.5'
 
-  # Nginx反向代理（可选）
+  # Обратный прокси Nginx (опционально)
   nginx:
     image: nginx:1.25-alpine
     container_name: ntrip-nginx
@@ -97,9 +97,9 @@ services:
       - /var/cache/nginx:noexec,nosuid,size=100m
       - /var/run:noexec,nosuid,size=10m
     profiles:
-      - nginx  # 使用 --profile nginx 启用
+      - nginx  # Использовать --profile nginx для включения
 
-  # 监控服务（可选）
+  # Службы мониторинга (опционально)
   prometheus:
     image: prom/prometheus:v2.47.0
     container_name: ntrip-prometheus
@@ -139,9 +139,9 @@ services:
         max-file: "3"
     security_opt:
       - no-new-privileges:true
-    user: "65534:65534"  # nobody user
+    user: "65534:65534"  # пользователь nobody
     profiles:
-      - monitoring  # 使用 --profile monitoring 启用
+      - monitoring  # Использовать --profile monitoring для включения
 
   grafana:
     image: grafana/grafana:10.1.0
@@ -183,11 +183,11 @@ services:
         max-file: "3"
     security_opt:
       - no-new-privileges:true
-    user: "472:472"  # grafana user
+    user: "472:472"  # пользователь grafana
     profiles:
-      - monitoring  # 使用 --profile monitoring 启用
+      - monitoring  # Использовать --profile monitoring для включения
 
-  # Redis缓存服务（可选）
+  # Служба кэширования Redis (опционально)
   redis:
     image: redis:7.2-alpine
     container_name: ntrip-redis
@@ -218,7 +218,7 @@ services:
     security_opt:
       - no-new-privileges:true
     profiles:
-      - cache  # 使用 --profile cache 启用
+      - cache  # Использовать --profile cache для включения
 
 networks:
   ntrip-network:
@@ -234,7 +234,7 @@ networks:
       com.docker.network.driver.mtu: 1500
 
 volumes:
-  # 应用数据卷
+  # Тома данных приложения
   ntrip-data:
     name: ntrip-data
     driver: local
@@ -245,7 +245,7 @@ volumes:
     name: ntrip-config
     driver: local
   
-  # 监控数据卷
+  # Тома данных мониторинга
   prometheus-data:
     name: prometheus-data
     driver: local
@@ -256,7 +256,7 @@ volumes:
     name: grafana-logs
     driver: local
   
-  # Nginx数据卷
+  # Тома данных Nginx
   nginx-cache:
     name: nginx-cache
     driver: local
@@ -264,7 +264,7 @@ volumes:
     name: nginx-logs
     driver: local
   
-  # Redis数据卷
+  # Тома данных Redis
   redis-data:
     name: redis-data
     driver: local

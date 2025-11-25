@@ -1,11 +1,11 @@
 #!/bin/bash
 
-# NTRIP Caster 快速启动脚本
-# 用于快速部署和管理 NTRIP Caster 服务
+# Скрипт быстрого запуска NTRIP Caster
+# Используется для быстрого развёртывания и управления службой NTRIP Caster
 
 set -e
 
-# 颜色定义
+# Определение цветов
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
@@ -14,13 +14,13 @@ PURPLE='\033[0;35m'
 CYAN='\033[0;36m'
 NC='\033[0m' # No Color
 
-# 项目配置
+# Конфигурация проекта
 PROJECT_NAME="ntrip-caster"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ENV_FILE="${SCRIPT_DIR}/.env"
 ENV_EXAMPLE="${SCRIPT_DIR}/.env.example"
 
-# 日志函数
+# Функции логирования
 log_info() {
     echo -e "${BLUE}[INFO]${NC} $1"
 }
@@ -41,79 +41,79 @@ log_step() {
     echo -e "${PURPLE}[STEP]${NC} $1"
 }
 
-# 显示横幅
+# Отображение баннера
 show_banner() {
     echo -e "${CYAN}"
     echo "╔══════════════════════════════════════════════════════════════╗"
-    echo "║                    NTRIP Caster 快速启动                    ║"
-    echo "║                     Docker 容器化部署                       ║"
+    echo "║                 Быстрый запуск NTRIP Caster                  ║"
+    echo "║                  Развёртывание через Docker                  ║"
     echo "╚══════════════════════════════════════════════════════════════╝"
     echo -e "${NC}"
 }
 
-# 检查依赖
+# Проверка зависимостей
 check_dependencies() {
-    log_step "检查系统依赖..."
+    log_step "Проверка системных зависимостей..."
     
-    # 检查 Docker
+    # Проверка Docker
     if ! command -v docker &> /dev/null; then
-        log_error "Docker 未安装，请先安装 Docker"
-        echo "安装指南: https://docs.docker.com/get-docker/"
+        log_error "Docker не установлен, сначала установите Docker"
+        echo "Руководство по установке: https://docs.docker.com/get-docker/"
         exit 1
     fi
     
-    # 检查 Docker Compose
+    # Проверка Docker Compose
     if ! docker compose version &> /dev/null && ! command -v docker-compose &> /dev/null; then
-        log_error "Docker Compose 未安装，请先安装 Docker Compose"
-        echo "安装指南: https://docs.docker.com/compose/install/"
+        log_error "Docker Compose не установлен, сначала установите Docker Compose"
+        echo "Руководство по установке: https://docs.docker.com/compose/install/"
         exit 1
     fi
     
-    # 检查 Docker 服务状态
+    # Проверка состояния службы Docker
     if ! docker info &> /dev/null; then
-        log_error "Docker 服务未运行，请启动 Docker 服务"
+        log_error "Служба Docker не запущена, запустите службу Docker"
         exit 1
     fi
     
-    log_success "系统依赖检查完成"
+    log_success "Проверка системных зависимостей завершена"
 }
 
-# 初始化环境
+# Инициализация окружения
 init_environment() {
-    log_step "初始化环境配置..."
+    log_step "Инициализация конфигурации окружения..."
     
-    # 创建 .env 文件
+    # Создание файла .env
     if [[ ! -f "$ENV_FILE" ]]; then
         if [[ -f "$ENV_EXAMPLE" ]]; then
             cp "$ENV_EXAMPLE" "$ENV_FILE"
-            log_success "已创建 .env 配置文件"
+            log_success "Создан файл конфигурации .env"
         else
-            log_error ".env.example 文件不存在"
+            log_error "Файл .env.example не существует"
             exit 1
         fi
     else
-        log_info ".env 文件已存在，跳过创建"
+        log_info "Файл .env уже существует, пропуск создания"
     fi
     
-    # 创建必要目录
-    log_info "创建必要目录..."
+    # Создание необходимых директорий
+    log_info "Создание необходимых директорий..."
     ./docker-deploy.sh create_directories
     
-    log_success "环境初始化完成"
+    log_success "Инициализация окружения завершена"
 }
 
-# 选择部署模式
+# Выбор режима развёртывания
 select_deployment_mode() {
     echo
-    log_step "选择部署模式:"
-    echo "1) 开发模式 (development) - 包含开发工具和调试功能"
-    echo "2) 生产模式 (production) - 优化性能，仅核心服务"
-    echo "3) 完整模式 (full) - 包含所有服务和监控"
-    echo "4) 最小模式 (minimal) - 仅 NTRIP Caster 核心服务"
+    log_step "Выбор режима развёртывания:"
+    echo "1) Режим разработки (development) - включает инструменты разработки и функции отладки"
+    echo "2) Режим production (production) - оптимизированная производительность, только основные службы"
+    echo "3) Полный режим (full) - включает все службы и мониторинг"
+    echo "4) Минимальный режим (minimal) - только основная служба NTRIP Caster"
     echo
     
     while true; do
-        read -p "请选择部署模式 [1-4]: " choice
+        read -p "Выберите режим развёртывания [1-4]: " choice
         case $choice in
             1)
                 ENVIRONMENT="development"
@@ -136,152 +136,152 @@ select_deployment_mode() {
                 break
                 ;;
             *)
-                log_warning "无效选择，请输入 1-4"
+                log_warning "Неверный выбор, введите 1-4"
                 ;;
         esac
     done
     
-    # 更新 .env 文件
+    # Обновление файла .env
     sed -i "s/^ENVIRONMENT=.*/ENVIRONMENT=$ENVIRONMENT/" "$ENV_FILE"
     
-    log_success "已选择 $ENVIRONMENT 模式，配置文件: $PROFILES"
+    log_success "Выбран режим $ENVIRONMENT, профили конфигурации: $PROFILES"
 }
 
-# 构建和启动服务
+# Сборка и запуск служб
 deploy_services() {
-    log_step "构建和启动服务..."
+    log_step "Сборка и запуск служб..."
     
-    # 拉取最新镜像
-    log_info "拉取 Docker 镜像..."
+    # Загрузка последних образов
+    log_info "Загрузка образов Docker..."
     ENVIRONMENT="$ENVIRONMENT" PROFILES="$PROFILES" ./docker-deploy.sh pull
     
-    # 构建自定义镜像
-    log_info "构建应用镜像..."
+    # Сборка пользовательских образов
+    log_info "Сборка образов приложения..."
     ENVIRONMENT="$ENVIRONMENT" PROFILES="$PROFILES" ./docker-deploy.sh build
     
-    # 启动服务
-    log_info "启动服务..."
+    # Запуск служб
+    log_info "Запуск служб..."
     ENVIRONMENT="$ENVIRONMENT" PROFILES="$PROFILES" ./docker-deploy.sh up -d
     
-    # 等待服务启动
-    log_info "等待服务启动..."
+    # Ожидание запуска служб
+    log_info "Ожидание запуска служб..."
     sleep 10
     
-    # 健康检查
-    log_info "执行健康检查..."
+    # Проверка здоровья
+    log_info "Выполнение проверки здоровья..."
     ENVIRONMENT="$ENVIRONMENT" PROFILES="$PROFILES" ./docker-deploy.sh health
     
-    log_success "服务部署完成"
+    log_success "Развёртывание служб завершено"
 }
 
-# 显示服务信息
+# Отображение информации о службах
 show_service_info() {
-    log_step "服务信息:"
+    log_step "Информация о службах:"
     
-    # 显示服务状态
+    # Отображение состояния служб
     ENVIRONMENT="$ENVIRONMENT" PROFILES="$PROFILES" ./docker-deploy.sh status
     
     echo
-    log_step "服务端点:"
+    log_step "Точки доступа служб:"
     
-    # 获取本机IP
+    # Получение IP-адреса локального хоста
     LOCAL_IP=$(hostname -I | awk '{print $1}' 2>/dev/null || echo "localhost")
     
-    echo "📡 NTRIP Caster 服务:"
-    echo "   - NTRIP 端口: ntrip://$LOCAL_IP:2101"
-    echo "   - Web 管理界面: http://$LOCAL_IP:5757"
+    echo "📡 Служба NTRIP Caster:"
+    echo "   - NTRIP порт: ntrip://$LOCAL_IP:2101"
+    echo "   - Веб-интерфейс управления: http://$LOCAL_IP:5757"
     
     if [[ "$PROFILES" == *"monitoring"* ]] || [[ "$PROFILES" == *"full"* ]]; then
         echo
-        echo "📊 监控服务:"
+        echo "📊 Службы мониторинга:"
         echo "   - Prometheus: http://$LOCAL_IP:9090"
         echo "   - Grafana: http://$LOCAL_IP:3000 (admin/admin123)"
     fi
     
     if [[ "$ENVIRONMENT" == "development" ]]; then
         echo
-        echo "🛠️ 开发工具:"
-        echo "   - Adminer (数据库管理): http://$LOCAL_IP:8081"
-        echo "   - Dozzle (日志查看): http://$LOCAL_IP:8082"
-        echo "   - cAdvisor (容器监控): http://$LOCAL_IP:8083"
+        echo "🛠️ Инструменты разработки:"
+        echo "   - Adminer (управление БД): http://$LOCAL_IP:8081"
+        echo "   - Dozzle (просмотр логов): http://$LOCAL_IP:8082"
+        echo "   - cAdvisor (мониторинг контейнеров): http://$LOCAL_IP:8083"
     fi
     
     if [[ -f "$ENV_FILE" ]]; then
         NGINX_PORT=$(grep "^NGINX_HTTP_PORT=" "$ENV_FILE" | cut -d'=' -f2 || echo "80")
         if [[ "$NGINX_PORT" != "80" ]]; then
             echo
-            echo "🌐 Nginx 代理:"
+            echo "🌐 Прокси Nginx:"
             echo "   - HTTP: http://$LOCAL_IP:$NGINX_PORT"
         fi
     fi
     
     echo
-    log_success "部署完成！请使用上述端点访问服务"
+    log_success "Развёртывание завершено! Используйте указанные выше точки доступа для доступа к службам"
 }
 
-# 显示管理命令
+# Отображение команд управления
 show_management_commands() {
     echo
-    log_step "常用管理命令:"
-    echo "查看日志:     ./docker-deploy.sh logs"
-    echo "查看状态:     ./docker-deploy.sh status"
-    echo "重启服务:     ./docker-deploy.sh restart"
-    echo "停止服务:     ./docker-deploy.sh down"
-    echo "清理资源:     ./docker-deploy.sh clean"
-    echo "健康检查:     ./docker-deploy.sh health"
-    echo "备份数据:     ./docker-deploy.sh backup"
-    echo "更新服务:     ./docker-deploy.sh update"
+    log_step "Часто используемые команды управления:"
+    echo "Просмотр логов:     ./docker-deploy.sh logs"
+    echo "Просмотр состояния: ./docker-deploy.sh status"
+    echo "Перезапуск служб:   ./docker-deploy.sh restart"
+    echo "Остановка служб:    ./docker-deploy.sh down"
+    echo "Очистка ресурсов:   ./docker-deploy.sh clean"
+    echo "Проверка здоровья:  ./docker-deploy.sh health"
+    echo "Резервное копирование: ./docker-deploy.sh backup"
+    echo "Обновление служб:   ./docker-deploy.sh update"
     echo
-    echo "使用 Makefile (推荐):"
-    echo "make up          # 启动服务"
-    echo "make down        # 停止服务"
-    echo "make logs        # 查看日志"
-    echo "make status      # 查看状态"
-    echo "make health      # 健康检查"
-    echo "make clean       # 清理资源"
+    echo "Использование Makefile (рекомендуется):"
+    echo "make up          # Запустить службы"
+    echo "make down        # Остановить службы"
+    echo "make logs        # Просмотр логов"
+    echo "make status      # Просмотр состояния"
+    echo "make health      # Проверка здоровья"
+    echo "make clean       # Очистка ресурсов"
 }
 
-# 主函数
+# Главная функция
 main() {
     show_banner
     
-    # 检查是否在正确目录
+    # Проверка, что скрипт запущен в правильной директории
     if [[ ! -f "docker-compose.yml" ]]; then
-        log_error "请在 NTRIP Caster 项目根目录下运行此脚本"
+        log_error "Запустите этот скрипт в корневой директории проекта NTRIP Caster"
         exit 1
     fi
     
-    # 检查依赖
+    # Проверка зависимостей
     check_dependencies
     
-    # 初始化环境
+    # Инициализация окружения
     init_environment
     
-    # 选择部署模式
+    # Выбор режима развёртывания
     select_deployment_mode
     
-    # 确认部署
+    # Подтверждение развёртывания
     echo
-    read -p "确认开始部署? [y/N]: " confirm
+    read -p "Подтвердите начало развёртывания? [y/N]: " confirm
     if [[ ! "$confirm" =~ ^[Yy]$ ]]; then
-        log_info "部署已取消"
+        log_info "Развёртывание отменено"
         exit 0
     fi
     
-    # 部署服务
+    # Развёртывание служб
     deploy_services
     
-    # 显示服务信息
+    # Отображение информации о службах
     show_service_info
     
-    # 显示管理命令
+    # Отображение команд управления
     show_management_commands
     
     echo
-    log_success "🎉 NTRIP Caster 快速启动完成！"
+    log_success "🎉 Быстрый запуск NTRIP Caster завершён!"
 }
 
-# 脚本入口
+# Точка входа скрипта
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     main "$@"
 fi

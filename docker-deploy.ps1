@@ -1,5 +1,5 @@
-# NTRIP Caster Docker 部署脚本 (PowerShell版本)
-# 用于在 Windows 环境下管理 NTRIP Caster 的 Docker 容器
+# Скрипт развёртывания NTRIP Caster через Docker (версия PowerShell)
+# Используется для управления контейнерами Docker NTRIP Caster в среде Windows
 
 param(
     [Parameter(Position=0)]
@@ -9,16 +9,16 @@ param(
     [string[]]$Args
 )
 
-# 设置错误处理
+# Настройка обработки ошибок
 $ErrorActionPreference = "Stop"
 
-# 项目配置
+# Конфигурация проекта
 $PROJECT_NAME = "ntrip-caster"
 $SCRIPT_DIR = Split-Path -Parent $MyInvocation.MyCommand.Path
 $ENV_FILE = Join-Path $SCRIPT_DIR ".env"
 $ENV_EXAMPLE = Join-Path $SCRIPT_DIR ".env.example"
 
-# 颜色定义
+# Определение цветов
 $Colors = @{
     Red = "Red"
     Green = "Green"
@@ -29,7 +29,7 @@ $Colors = @{
     White = "White"
 }
 
-# 日志函数
+# Функции логирования
 function Write-Log {
     param(
         [string]$Message,
@@ -47,61 +47,61 @@ function Write-Log {
     }
 }
 
-# 显示横幅
+# Отображение баннера
 function Show-Banner {
     Write-Host "" -ForegroundColor $Colors.Cyan
     Write-Host "╔══════════════════════════════════════════════════════════════╗" -ForegroundColor $Colors.Cyan
-    Write-Host "║                    NTRIP Caster 部署脚本                    ║" -ForegroundColor $Colors.Cyan
-    Write-Host "║                     PowerShell 版本                         ║" -ForegroundColor $Colors.Cyan
+    Write-Host "║              Скрипт развёртывания NTRIP Caster               ║" -ForegroundColor $Colors.Cyan
+    Write-Host "║                    Версия PowerShell                         ║" -ForegroundColor $Colors.Cyan
     Write-Host "╚══════════════════════════════════════════════════════════════╝" -ForegroundColor $Colors.Cyan
     Write-Host "" -ForegroundColor $Colors.Cyan
 }
 
-# 检查 Docker 环境
+# Проверка окружения Docker
 function Test-DockerEnvironment {
-    Write-Log "检查 Docker 环境..." "Step"
+    Write-Log "Проверка окружения Docker..." "Step"
     
-    # 检查 Docker
+    # Проверка Docker
     try {
         $dockerVersion = docker --version
-        Write-Log "Docker 版本: $dockerVersion" "Info"
+        Write-Log "Версия Docker: $dockerVersion" "Info"
     }
     catch {
-        Write-Log "Docker 未安装或未启动" "Error"
-        Write-Log "请安装 Docker Desktop: https://www.docker.com/products/docker-desktop" "Info"
+        Write-Log "Docker не установлен или не запущен" "Error"
+        Write-Log "Установите Docker Desktop: https://www.docker.com/products/docker-desktop" "Info"
         exit 1
     }
     
-    # 检查 Docker Compose
+    # Проверка Docker Compose
     try {
         $composeVersion = docker compose version
-        Write-Log "Docker Compose 版本: $composeVersion" "Info"
+        Write-Log "Версия Docker Compose: $composeVersion" "Info"
         $script:DOCKER_COMPOSE_CMD = "docker compose"
     }
     catch {
         try {
             $composeVersion = docker-compose --version
-            Write-Log "Docker Compose 版本: $composeVersion" "Info"
+            Write-Log "Версия Docker Compose: $composeVersion" "Info"
             $script:DOCKER_COMPOSE_CMD = "docker-compose"
         }
         catch {
-            Write-Log "Docker Compose 未安装" "Error"
+            Write-Log "Docker Compose не установлен" "Error"
             exit 1
         }
     }
     
-    # 检查 Docker 守护进程
+    # Проверка демона Docker
     try {
         docker info | Out-Null
-        Write-Log "Docker 守护进程运行正常" "Success"
+        Write-Log "Демон Docker работает нормально" "Success"
     }
     catch {
-        Write-Log "Docker 守护进程未运行，请启动 Docker Desktop" "Error"
+        Write-Log "Демон Docker не запущен, запустите Docker Desktop" "Error"
         exit 1
     }
 }
 
-# 加载环境变量
+# Загрузка переменных окружения
 function Import-EnvironmentVariables {
     if (Test-Path $ENV_FILE) {
         Get-Content $ENV_FILE | ForEach-Object {
@@ -109,13 +109,13 @@ function Import-EnvironmentVariables {
                 [Environment]::SetEnvironmentVariable($matches[1], $matches[2], "Process")
             }
         }
-        Write-Log "已加载环境变量" "Info"
+        Write-Log "Переменные окружения загружены" "Info"
     } else {
-        Write-Log ".env 文件不存在，使用默认配置" "Warning"
+        Write-Log "Файл .env не существует, используется конфигурация по умолчанию" "Warning"
     }
 }
 
-# 构建 Docker Compose 命令
+# Построение команды Docker Compose
 function Build-ComposeCommand {
     param([string[]]$ComposeArgs)
     
@@ -145,26 +145,26 @@ function Build-ComposeCommand {
     return $fullCommand -join " "
 }
 
-# 执行 Docker Compose 命令
+# Выполнение команды Docker Compose
 function Invoke-ComposeCommand {
     param([string[]]$ComposeArgs)
     
     $command = Build-ComposeCommand $ComposeArgs
-    Write-Log "执行命令: $command" "Info"
+    Write-Log "Выполнение команды: $command" "Info"
     
     try {
         Invoke-Expression $command
         return $LASTEXITCODE
     }
     catch {
-        Write-Log "命令执行失败: $_" "Error"
+        Write-Log "Не удалось выполнить команду: $_" "Error"
         return 1
     }
 }
 
-# 创建必要目录
+# Создание необходимых директорий
 function New-RequiredDirectories {
-    Write-Log "创建必要目录..." "Step"
+    Write-Log "Создание необходимых директорий..." "Step"
     
     $directories = @(
         "data",
@@ -183,41 +183,41 @@ function New-RequiredDirectories {
         $fullPath = Join-Path $SCRIPT_DIR $dir
         if (-not (Test-Path $fullPath)) {
             New-Item -ItemType Directory -Path $fullPath -Force | Out-Null
-            Write-Log "创建目录: $dir" "Info"
+            Write-Log "Создана директория: $dir" "Info"
         }
     }
     
-    # 设置权限（Windows 下的等效操作）
+    # Установка прав доступа (эквивалентная операция для Windows)
     try {
         $dataPath = Join-Path $SCRIPT_DIR "data"
         $logsPath = Join-Path $SCRIPT_DIR "logs"
         
-        # 确保当前用户有完全控制权限
+        # Убедиться, что текущий пользователь имеет полный контроль
         icacls $dataPath /grant "${env:USERNAME}:(OI)(CI)F" /T | Out-Null
         icacls $logsPath /grant "${env:USERNAME}:(OI)(CI)F" /T | Out-Null
         
-        Write-Log "目录权限设置完成" "Success"
+        Write-Log "Права доступа к директориям установлены" "Success"
     }
     catch {
-        Write-Log "权限设置失败，但不影响使用" "Warning"
+        Write-Log "Не удалось установить права доступа, но это не критично" "Warning"
     }
 }
 
-# 创建环境文件
+# Создание файла окружения
 function New-EnvironmentFile {
-    Write-Log "创建环境配置文件..." "Step"
+    Write-Log "Создание конфигурационного файла окружения..." "Step"
     
     if (-not (Test-Path $ENV_FILE)) {
         if (Test-Path $ENV_EXAMPLE) {
             Copy-Item $ENV_EXAMPLE $ENV_FILE
-            Write-Log "已创建 .env 文件" "Success"
+            Write-Log "Файл .env создан" "Success"
         } else {
-            Write-Log ".env.example 文件不存在" "Error"
+            Write-Log "Файл .env.example не существует" "Error"
             return
         }
     }
     
-    # 更新环境变量
+    # Обновление переменных окружения
     $content = Get-Content $ENV_FILE
     $environment = $env:ENVIRONMENT
     if (-not $environment) { $environment = "development" }
@@ -227,44 +227,44 @@ function New-EnvironmentFile {
     $content = $content -replace '^TZ=.*', "TZ=Asia/Shanghai"
     
     Set-Content -Path $ENV_FILE -Value $content
-    Write-Log "环境配置文件更新完成" "Success"
+    Write-Log "Конфигурационный файл окружения обновлён" "Success"
 }
 
-# 健康检查
+# Проверка здоровья
 function Test-ServiceHealth {
-    Write-Log "执行健康检查..." "Step"
+    Write-Log "Выполнение проверки здоровья..." "Step"
     
     try {
         if (Test-Path "healthcheck.py") {
             python healthcheck.py
         } else {
-            Write-Log "健康检查脚本不存在，跳过检查" "Warning"
+            Write-Log "Скрипт проверки здоровья не существует, пропуск проверки" "Warning"
         }
     }
     catch {
-        Write-Log "健康检查失败: $_" "Error"
+        Write-Log "Проверка здоровья не удалась: $_" "Error"
     }
 }
 
-# 显示服务信息
+# Отображение информации о службах
 function Show-ServiceInfo {
-    Write-Log "服务信息:" "Step"
+    Write-Log "Информация о службах:" "Step"
     
-    # 获取本机IP
-    $localIP = (Get-NetIPAddress -AddressFamily IPv4 -InterfaceAlias "以太网*" | Select-Object -First 1).IPAddress
+    # Получение IP-адреса локального хоста
+    $localIP = (Get-NetIPAddress -AddressFamily IPv4 -InterfaceAlias "Ethernet*" | Select-Object -First 1).IPAddress
     if (-not $localIP) {
         $localIP = "localhost"
     }
     
     Write-Host ""
-    Write-Host "📡 NTRIP Caster 服务:" -ForegroundColor $Colors.Cyan
-    Write-Host "   - NTRIP 端口: ntrip://${localIP}:2101" -ForegroundColor $Colors.White
-    Write-Host "   - Web 管理界面: http://${localIP}:5757" -ForegroundColor $Colors.White
+    Write-Host "📡 Служба NTRIP Caster:" -ForegroundColor $Colors.Cyan
+    Write-Host "   - NTRIP порт: ntrip://${localIP}:2101" -ForegroundColor $Colors.White
+    Write-Host "   - Веб-интерфейс управления: http://${localIP}:5757" -ForegroundColor $Colors.White
     
     $profiles = $env:PROFILES
     if ($profiles -and ($profiles -match "monitoring" -or $profiles -match "full")) {
         Write-Host ""
-        Write-Host "📊 监控服务:" -ForegroundColor $Colors.Cyan
+        Write-Host "📊 Службы мониторинга:" -ForegroundColor $Colors.Cyan
         Write-Host "   - Prometheus: http://${localIP}:9090" -ForegroundColor $Colors.White
         Write-Host "   - Grafana: http://${localIP}:3000 (admin/admin123)" -ForegroundColor $Colors.White
     }
@@ -272,66 +272,66 @@ function Show-ServiceInfo {
     $environment = $env:ENVIRONMENT
     if ($environment -eq "development") {
         Write-Host ""
-        Write-Host "🛠️ 开发工具:" -ForegroundColor $Colors.Cyan
-        Write-Host "   - Adminer (数据库管理): http://${localIP}:8081" -ForegroundColor $Colors.White
-        Write-Host "   - Dozzle (日志查看): http://${localIP}:8082" -ForegroundColor $Colors.White
-        Write-Host "   - cAdvisor (容器监控): http://${localIP}:8083" -ForegroundColor $Colors.White
+        Write-Host "🛠️ Инструменты разработки:" -ForegroundColor $Colors.Cyan
+        Write-Host "   - Adminer (управление БД): http://${localIP}:8081" -ForegroundColor $Colors.White
+        Write-Host "   - Dozzle (просмотр логов): http://${localIP}:8082" -ForegroundColor $Colors.White
+        Write-Host "   - cAdvisor (мониторинг контейнеров): http://${localIP}:8083" -ForegroundColor $Colors.White
     }
     
     Write-Host ""
 }
 
-# 显示帮助信息
+# Отображение справки
 function Show-Help {
     Write-Host ""
-    Write-Host "NTRIP Caster Docker 部署脚本 (PowerShell版本)" -ForegroundColor $Colors.Cyan
+    Write-Host "Скрипт развёртывания NTRIP Caster через Docker (версия PowerShell)" -ForegroundColor $Colors.Cyan
     Write-Host ""
-    Write-Host "用法: .\docker-deploy.ps1 <命令> [选项]" -ForegroundColor $Colors.White
+    Write-Host "Использование: .\docker-deploy.ps1 <команда> [опции]" -ForegroundColor $Colors.White
     Write-Host ""
-    Write-Host "基本命令:" -ForegroundColor $Colors.Yellow
-    Write-Host "  up              启动服务" -ForegroundColor $Colors.White
-    Write-Host "  down            停止服务" -ForegroundColor $Colors.White
-    Write-Host "  restart         重启服务" -ForegroundColor $Colors.White
-    Write-Host "  status          查看服务状态" -ForegroundColor $Colors.White
-    Write-Host "  logs            查看服务日志" -ForegroundColor $Colors.White
-    Write-Host "  build           构建镜像" -ForegroundColor $Colors.White
-    Write-Host "  pull            拉取镜像" -ForegroundColor $Colors.White
-    Write-Host "  clean           清理资源" -ForegroundColor $Colors.White
+    Write-Host "Основные команды:" -ForegroundColor $Colors.Yellow
+    Write-Host "  up              Запустить службы" -ForegroundColor $Colors.White
+    Write-Host "  down            Остановить службы" -ForegroundColor $Colors.White
+    Write-Host "  restart         Перезапустить службы" -ForegroundColor $Colors.White
+    Write-Host "  status          Просмотреть состояние служб" -ForegroundColor $Colors.White
+    Write-Host "  logs            Просмотреть логи служб" -ForegroundColor $Colors.White
+    Write-Host "  build           Собрать образ" -ForegroundColor $Colors.White
+    Write-Host "  pull            Загрузить образ" -ForegroundColor $Colors.White
+    Write-Host "  clean           Очистить ресурсы" -ForegroundColor $Colors.White
     Write-Host ""
-    Write-Host "管理命令:" -ForegroundColor $Colors.Yellow
-    Write-Host "  health          健康检查" -ForegroundColor $Colors.White
-    Write-Host "  info            显示服务信息" -ForegroundColor $Colors.White
-    Write-Host "  backup          备份数据" -ForegroundColor $Colors.White
-    Write-Host "  restore         恢复数据" -ForegroundColor $Colors.White
-    Write-Host "  update          更新服务" -ForegroundColor $Colors.White
+    Write-Host "Команды управления:" -ForegroundColor $Colors.Yellow
+    Write-Host "  health          Проверка здоровья" -ForegroundColor $Colors.White
+    Write-Host "  info            Отобразить информацию о службах" -ForegroundColor $Colors.White
+    Write-Host "  backup          Резервное копирование данных" -ForegroundColor $Colors.White
+    Write-Host "  restore         Восстановление данных" -ForegroundColor $Colors.White
+    Write-Host "  update          Обновить службы" -ForegroundColor $Colors.White
     Write-Host ""
-    Write-Host "环境变量:" -ForegroundColor $Colors.Yellow
-    Write-Host "  ENVIRONMENT     部署环境 (development|production)" -ForegroundColor $Colors.White
-    Write-Host "  PROFILES        服务配置文件 (dev|prod|monitoring|full)" -ForegroundColor $Colors.White
+    Write-Host "Переменные окружения:" -ForegroundColor $Colors.Yellow
+    Write-Host "  ENVIRONMENT     Окружение развёртывания (development|production)" -ForegroundColor $Colors.White
+    Write-Host "  PROFILES        Профили конфигурации служб (dev|prod|monitoring|full)" -ForegroundColor $Colors.White
     Write-Host ""
-    Write-Host "示例:" -ForegroundColor $Colors.Yellow
+    Write-Host "Примеры:" -ForegroundColor $Colors.Yellow
     Write-Host "  .\docker-deploy.ps1 up -d" -ForegroundColor $Colors.White
     Write-Host "  `$env:ENVIRONMENT='production'; .\docker-deploy.ps1 up" -ForegroundColor $Colors.White
     Write-Host "  `$env:PROFILES='monitoring'; .\docker-deploy.ps1 restart" -ForegroundColor $Colors.White
     Write-Host ""
 }
 
-# 主函数
+# Главная функция
 function Main {
     param([string]$Command, [string[]]$Args)
     
     Show-Banner
     
-    # 检查是否在正确目录
+    # Проверка, что скрипт запущен в правильной директории
     if (-not (Test-Path "docker-compose.yml")) {
-        Write-Log "请在 NTRIP Caster 项目根目录下运行此脚本" "Error"
+        Write-Log "Запустите этот скрипт в корневой директории проекта NTRIP Caster" "Error"
         exit 1
     }
     
-    # 检查 Docker 环境
+    # Проверка окружения Docker
     Test-DockerEnvironment
     
-    # 加载环境变量
+    # Загрузка переменных окружения
     Import-EnvironmentVariables
     
     switch ($Command.ToLower()) {
@@ -339,7 +339,7 @@ function Main {
             Show-Help
         }
         "check" {
-            Write-Log "Docker 环境检查完成" "Success"
+            Write-Log "Проверка окружения Docker завершена" "Success"
         }
         "create_directories" {
             New-RequiredDirectories
@@ -348,7 +348,7 @@ function Main {
             New-EnvironmentFile
         }
         "up" {
-            Write-Log "启动服务..." "Step"
+            Write-Log "Запуск служб..." "Step"
             $exitCode = Invoke-ComposeCommand (@("up") + $Args)
             if ($exitCode -eq 0) {
                 Start-Sleep -Seconds 5
@@ -357,11 +357,11 @@ function Main {
             }
         }
         "down" {
-            Write-Log "停止服务..." "Step"
+            Write-Log "Остановка служб..." "Step"
             Invoke-ComposeCommand (@("down") + $Args)
         }
         "restart" {
-            Write-Log "重启服务..." "Step"
+            Write-Log "Перезапуск служб..." "Step"
             Invoke-ComposeCommand (@("restart") + $Args)
             Start-Sleep -Seconds 5
             Test-ServiceHealth
@@ -373,15 +373,15 @@ function Main {
             Invoke-ComposeCommand (@("logs") + $Args)
         }
         "build" {
-            Write-Log "构建镜像..." "Step"
+            Write-Log "Сборка образа..." "Step"
             Invoke-ComposeCommand (@("build") + $Args)
         }
         "pull" {
-            Write-Log "拉取镜像..." "Step"
+            Write-Log "Загрузка образа..." "Step"
             Invoke-ComposeCommand (@("pull") + $Args)
         }
         "clean" {
-            Write-Log "清理资源..." "Step"
+            Write-Log "Очистка ресурсов..." "Step"
             Invoke-ComposeCommand @("down", "--volumes", "--remove-orphans")
             docker system prune -f
         }
@@ -392,7 +392,7 @@ function Main {
             Show-ServiceInfo
         }
         "backup" {
-            Write-Log "备份数据..." "Step"
+            Write-Log "Резервное копирование данных..." "Step"
             $backupDir = Join-Path $SCRIPT_DIR "backup"
             $timestamp = Get-Date -Format "yyyyMMdd_HHmmss"
             $backupFile = Join-Path $backupDir "ntrip_backup_$timestamp.zip"
@@ -404,41 +404,41 @@ function Main {
             $dataDir = Join-Path $SCRIPT_DIR "data"
             if (Test-Path $dataDir) {
                 Compress-Archive -Path $dataDir -DestinationPath $backupFile -Force
-                Write-Log "数据备份完成: $backupFile" "Success"
+                Write-Log "Резервное копирование данных завершено: $backupFile" "Success"
             } else {
-                Write-Log "数据目录不存在" "Warning"
+                Write-Log "Директория данных не существует" "Warning"
             }
         }
         "restore" {
-            Write-Log "恢复数据..." "Step"
+            Write-Log "Восстановление данных..." "Step"
             if ($Args.Count -gt 0) {
                 $backupFile = $Args[0]
                 if (Test-Path $backupFile) {
                     $dataDir = Join-Path $SCRIPT_DIR "data"
                     Expand-Archive -Path $backupFile -DestinationPath $dataDir -Force
-                    Write-Log "数据恢复完成" "Success"
+                    Write-Log "Восстановление данных завершено" "Success"
                 } else {
-                    Write-Log "备份文件不存在: $backupFile" "Error"
+                    Write-Log "Файл резервной копии не существует: $backupFile" "Error"
                 }
             } else {
-                Write-Log "请指定备份文件路径" "Error"
+                Write-Log "Укажите путь к файлу резервной копии" "Error"
             }
         }
         "update" {
-            Write-Log "更新服务..." "Step"
+            Write-Log "Обновление служб..." "Step"
             Invoke-ComposeCommand @("pull")
             Invoke-ComposeCommand @("up", "-d")
-            Write-Log "服务更新完成" "Success"
+            Write-Log "Обновление служб завершено" "Success"
         }
         default {
-            Write-Log "未知命令: $Command" "Error"
+            Write-Log "Неизвестная команда: $Command" "Error"
             Show-Help
             exit 1
         }
     }
 }
 
-# 脚本入口
+# Точка входа скрипта
 if ($MyInvocation.InvocationName -ne '.') {
     Main $Command $Args
 }

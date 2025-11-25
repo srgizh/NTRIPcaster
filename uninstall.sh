@@ -1,147 +1,148 @@
 #!/bin/bash
 #
-# NTRIP Caster 一键卸载脚本
-# 适用于 Debian/Ubuntu 系统
-# 作者: 2RTK
-# 版本: 1.0.0
+# Скрипт автоматической деинсталляции NTRIP Caster
+# Для систем Debian/Ubuntu
+# Автор: 2RTK
+# Версия: 1.0.0
 #
 
-# 颜色定义
+# Определение цветов
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[0;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-# 检查是否以 root 权限运行
+# Проверка запуска от root
 if [ "$EUID" -ne 0 ]; then
-  echo -e "${RED}错误: 请使用 root 权限运行此脚本 (sudo ./uninstall.sh)${NC}"
+  echo -e "${RED}Ошибка: запустите скрипт с правами root (sudo ./uninstall.sh)${NC}"
   exit 1
 fi
 
-# 显示欢迎信息
+# Отображение приветственного сообщения
 echo -e "${BLUE}=================================================${NC}"
-echo -e "${BLUE}       2RTK NTRIP Caster 一键卸载脚本         ${NC}"
+echo -e "${BLUE}       Скрипт автоматической деинсталляции       ${NC}"
+echo -e "${BLUE}           2RTK NTRIP Caster                     ${NC}"
 echo -e "${BLUE}=================================================${NC}"
-echo -e "${RED}警告: 此脚本将完全卸载 2RTK NTRIP Caster 及其所有数据${NC}"
+echo -e "${RED}Внимание: этот скрипт полностью удалит 2RTK NTRIP Caster и все данные${NC}"
 echo ""
 
-# 确认卸载
-read -p "确定要卸载 2RTK NTRIP Caster 吗? (y/n): " confirm
+# Подтверждение деинсталляции
+read -p "Вы уверены, что хотите удалить 2RTK NTRIP Caster? (y/n): " confirm
 if [[ "$confirm" != "y" && "$confirm" != "Y" ]]; then
-  echo -e "${GREEN}卸载已取消${NC}"
+  echo -e "${GREEN}Деинсталляция отменена${NC}"
   exit 0
 fi
 
-# 设置安装目录（与安装脚本中的相同）
+# Установка путей установки (таких же, как в скрипте установки)
 INSTALL_DIR="/opt/2rtk"
 CONFIG_DIR="/etc/2rtk"
 LOG_DIR="/var/log/2rtk"
 SERVICE_NAME="2rtk"
 
-# 停止并禁用服务
-echo -e "${YELLOW}停止并禁用服务...${NC}"
+# Остановка и отключение службы
+echo -e "${YELLOW}Остановка и отключение службы...${NC}"
 systemctl stop $SERVICE_NAME
 systemctl disable $SERVICE_NAME
 systemctl daemon-reload
 
-# 删除 systemd 服务文件
-echo -e "${YELLOW}删除 systemd 服务文件...${NC}"
+# Удаление файла службы systemd
+echo -e "${YELLOW}Удаление файла службы systemd...${NC}"
 rm -f /etc/systemd/system/$SERVICE_NAME.service
 
-# 删除 Nginx 配置
-echo -e "${YELLOW}删除 Nginx 配置...${NC}"
+# Удаление конфигурации Nginx
+echo -e "${YELLOW}Удаление конфигурации Nginx...${NC}"
 rm -f /etc/nginx/sites-enabled/2rtk
 rm -f /etc/nginx/sites-available/2rtk
 systemctl restart nginx
 
-# 删除日志轮转配置
-echo -e "${YELLOW}删除日志轮转配置...${NC}"
+# Удаление конфигурации ротации логов
+echo -e "${YELLOW}Удаление конфигурации ротации логов...${NC}"
 rm -f /etc/logrotate.d/2rtk
 
-# 删除防火墙规则（如果存在）
-echo -e "${YELLOW}删除防火墙规则...${NC}"
+# Удаление правил файрвола (если существуют)
+echo -e "${YELLOW}Удаление правил файрвола...${NC}"
 if command -v ufw > /dev/null; then
     ufw delete allow 2101/tcp
     ufw delete allow 5757/tcp
-    echo -e "${GREEN}已删除 UFW 防火墙规则${NC}"
+    echo -e "${GREEN}Правила файрвола UFW удалены${NC}"
 elif command -v firewall-cmd > /dev/null; then
     firewall-cmd --permanent --remove-port=2101/tcp
     firewall-cmd --permanent --remove-port=5757/tcp
     firewall-cmd --reload
-    echo -e "${GREEN}已删除 firewalld 防火墙规则${NC}"
+    echo -e "${GREEN}Правила файрвола firewalld удалены${NC}"
 else
-    echo -e "${YELLOW}未检测到支持的防火墙，请手动删除防火墙规则${NC}"
+    echo -e "${YELLOW}Поддерживаемый файрвол не обнаружен, удалите правила файрвола вручную${NC}"
 fi
 
-# 备份数据（可选）
-echo -e "${YELLOW}是否需要备份数据? (y/n): ${NC}"
+# Резервное копирование данных (опционально)
+echo -e "${YELLOW}Нужно ли создать резервную копию данных? (y/n): ${NC}"
 read backup_choice
 if [[ "$backup_choice" == "y" || "$backup_choice" == "Y" ]]; then
     BACKUP_DIR="/root/2rtk_backup_$(date +%Y%m%d_%H%M%S)"
-    echo -e "${YELLOW}创建备份目录: $BACKUP_DIR${NC}"
+    echo -e "${YELLOW}Создание директории резервного копирования: $BACKUP_DIR${NC}"
     mkdir -p $BACKUP_DIR
     
-    # 备份配置文件
+    # Резервное копирование конфигурационных файлов
     if [ -d "$CONFIG_DIR" ]; then
         cp -r $CONFIG_DIR $BACKUP_DIR/
-        echo -e "${GREEN}配置文件已备份到 $BACKUP_DIR/$(basename $CONFIG_DIR)${NC}"
+        echo -e "${GREEN}Конфигурационные файлы скопированы в $BACKUP_DIR/$(basename $CONFIG_DIR)${NC}"
     fi
     
-    # 备份数据库
+    # Резервное копирование базы данных
     if [ -f "$INSTALL_DIR/2rtk.db" ]; then
         cp $INSTALL_DIR/2rtk.db $BACKUP_DIR/
-        echo -e "${GREEN}数据库已备份到 $BACKUP_DIR/2rtk.db${NC}"
+        echo -e "${GREEN}База данных скопирована в $BACKUP_DIR/2rtk.db${NC}"
     fi
     
-    # 备份日志
+    # Резервное копирование логов
     if [ -d "$LOG_DIR" ]; then
         cp -r $LOG_DIR $BACKUP_DIR/
-        echo -e "${GREEN}日志文件已备份到 $BACKUP_DIR/$(basename $LOG_DIR)${NC}"
+        echo -e "${GREEN}Файлы логов скопированы в $BACKUP_DIR/$(basename $LOG_DIR)${NC}"
     fi
     
-    echo -e "${GREEN}数据备份完成: $BACKUP_DIR${NC}"
+    echo -e "${GREEN}Резервное копирование данных завершено: $BACKUP_DIR${NC}"
 fi
 
-# 删除安装目录
-echo -e "${YELLOW}删除安装目录...${NC}"
+# Удаление директории установки
+echo -e "${YELLOW}Удаление директории установки...${NC}"
 rm -rf $INSTALL_DIR
 
-# 删除配置目录
-echo -e "${YELLOW}删除配置目录...${NC}"
+# Удаление директории конфигурации
+echo -e "${YELLOW}Удаление директории конфигурации...${NC}"
 rm -rf $CONFIG_DIR
 
-# 删除日志目录
-echo -e "${YELLOW}删除日志目录...${NC}"
+# Удаление директории логов
+echo -e "${YELLOW}Удаление директории логов...${NC}"
 rm -rf $LOG_DIR
 
-# 询问是否卸载依赖包
-echo -e "${YELLOW}是否卸载安装的依赖包? (y/n): ${NC}"
+# Запрос об удалении зависимостей
+echo -e "${YELLOW}Удалить установленные зависимости? (y/n): ${NC}"
 read deps_choice
 if [[ "$deps_choice" == "y" || "$deps_choice" == "Y" ]]; then
-    echo -e "${YELLOW}卸载依赖包...${NC}"
-    # 注意：这里只卸载安装脚本中明确安装的包，不包括其依赖
+    echo -e "${YELLOW}Удаление зависимостей...${NC}"
+    # Примечание: здесь удаляются только явно установленные скриптом пакеты, без их зависимостей
     apt-get remove -y supervisor nginx
-    echo -e "${GREEN}依赖包已卸载${NC}"
+    echo -e "${GREEN}Зависимости удалены${NC}"
 else
-    echo -e "${YELLOW}保留依赖包${NC}"
+    echo -e "${YELLOW}Зависимости сохранены${NC}"
 fi
 
-# 显示卸载完成信息
+# Отображение информации о завершении деинсталляции
 echo -e "${BLUE}=================================================${NC}"
-echo -e "${GREEN}2RTK NTRIP Caster 卸载完成！${NC}"
+echo -e "${GREEN}Деинсталляция 2RTK NTRIP Caster завершена!${NC}"
 echo -e "${BLUE}------------------------------------------------${NC}"
-echo -e "${YELLOW}已删除以下内容:${NC}"
-echo -e "  - 服务文件: /etc/systemd/system/$SERVICE_NAME.service"
-echo -e "  - 安装目录: $INSTALL_DIR"
-echo -e "  - 配置目录: $CONFIG_DIR"
-echo -e "  - 日志目录: $LOG_DIR"
-echo -e "  - Nginx 配置: /etc/nginx/sites-available/2rtk"
-echo -e "  - 日志轮转配置: /etc/logrotate.d/2rtk"
+echo -e "${YELLOW}Удалено следующее:${NC}"
+echo -e "  - Файл службы: /etc/systemd/system/$SERVICE_NAME.service"
+echo -e "  - Директория установки: $INSTALL_DIR"
+echo -e "  - Директория конфигурации: $CONFIG_DIR"
+echo -e "  - Директория логов: $LOG_DIR"
+echo -e "  - Конфигурация Nginx: /etc/nginx/sites-available/2rtk"
+echo -e "  - Конфигурация ротации логов: /etc/logrotate.d/2rtk"
 
 if [[ "$backup_choice" == "y" || "$backup_choice" == "Y" ]]; then
     echo -e "${BLUE}------------------------------------------------${NC}"
-    echo -e "${GREEN}数据已备份到: $BACKUP_DIR${NC}"
+    echo -e "${GREEN}Резервная копия данных создана в: $BACKUP_DIR${NC}"
 fi
 
 echo -e "${BLUE}=================================================${NC}"

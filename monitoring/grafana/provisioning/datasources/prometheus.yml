@@ -1,10 +1,10 @@
-# Grafana 数据源配置
-# 自动配置Prometheus数据源
+# Конфигурация источников данных Grafana
+# Автоматическая настройка источника данных Prometheus
 
 apiVersion: 1
 
 datasources:
-  # Prometheus主数据源
+  # Основной источник данных Prometheus
   - name: Prometheus
     type: prometheus
     access: proxy
@@ -20,13 +20,13 @@ datasources:
       disableRecordingRules: false
       incrementalQueryOverlapWindow: 10m
       exemplarTraceIdDestinations:
-        # 链路追踪集成（可选）
+        # Интеграция трассировки (опционально)
         - name: trace_id
           datasourceUid: jaeger
     uid: prometheus
     version: 1
   
-  # 可选：如果有其他Prometheus实例
+  # Опционально: если есть другие экземпляры Prometheus
   # - name: Prometheus-External
   #   type: prometheus
   #   access: proxy
@@ -44,7 +44,7 @@ datasources:
   #   uid: prometheus-external
   #   version: 1
   
-  # 可选：Loki日志数据源
+  # Опционально: источник данных логов Loki
   # - name: Loki
   #   type: loki
   #   access: proxy
@@ -61,7 +61,7 @@ datasources:
   #   uid: loki
   #   version: 1
   
-  # 可选：Jaeger链路追踪数据源
+  # Опционально: источник данных трассировки Jaeger
   # - name: Jaeger
   #   type: jaeger
   #   access: proxy
@@ -81,7 +81,7 @@ datasources:
   #   uid: jaeger
   #   version: 1
   
-  # 可选：TestData数据源（用于测试）
+  # Опционально: источник данных TestData (для тестирования)
   - name: TestData
     type: testdata
     access: proxy
