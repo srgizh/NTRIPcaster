@@ -1238,8 +1238,8 @@ a=control:*
                         logger.log_debug(f"Подключение к точке монтирования {mount} закрыто", 'ntrip')
                         break
                     
-                    # Временно логируем получение данных от базы
-                    logger.log_info(f"Получены данные от базы {mount}: {len(data)} байт", 'ntrip')
+                    # Логирование получения данных от базы (можно убрать или перевести на DEBUG)
+                    # logger.log_debug(f"Получены данные от базы {mount}: {len(data)} байт", 'ntrip')
                     forwarder.upload_data(mount, data)
 
                     connection.get_connection_manager().update_mount_data_stats(mount, len(data))
@@ -1412,6 +1412,8 @@ a=control:*
         """Отправить ответ об успешном скачивании"""
         if self.ntrip_version == "2.0":
             # Для NTRIP 2.0 обязательно нужно добавить заголовок Ntrip-Version
+            # Внимание: Убрали Transfer-Encoding: chunked, так как многие роверы (например, South)
+            # заявляют поддержку NTRIP 2.0, но не умеют читать chunked-поток, ожидая сырые данные.
             headers = ["Connection: keep-alive", "Ntrip-Version: NTRIP/2.0"]
             self._send_response(
                 "HTTP/1.1 200 OK",

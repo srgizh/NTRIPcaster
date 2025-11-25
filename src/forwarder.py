@@ -325,8 +325,8 @@ class SimpleDataForwarder:
             self.mount_buffers[mount].append(data_chunk, timestamp)
             buffer_size = len(self.mount_buffers[mount].buffer)
         
-        # Временно логируем получение данных для диагностики  
-        logger.log_info(f"Получены данные от точки монтирования {mount}: {len(data_chunk)} байт, размер буфера: {buffer_size}", 'ntrip')
+        # Логирование получения данных (можно убрать или перевести на DEBUG)
+        # logger.log_debug(f"Получены данные от точки монтирования {mount}: {len(data_chunk)} байт", 'ntrip')
         
         self._send_to_subscribers(mount, data_chunk)
         
@@ -372,10 +372,10 @@ class SimpleDataForwarder:
             with self.client_lock:
                 if mount_name in self.clients:
                     clients = self.clients[mount_name][:]
-                    if clients:
-                        # Временно логируем для диагностики
-                        buffer_stats = buffer.get_stats()
-                        logger.log_info(f"Рассылка данных для точки монтирования {mount_name}: {len(clients)} клиентов, размер буфера: {buffer_stats['size']}", 'ntrip')
+                    # Логирование рассылки (можно убрать или перевести на DEBUG)
+                    # if clients:
+                    #     buffer_stats = buffer.get_stats()
+                    #     logger.log_debug(f"Рассылка данных для {mount_name}: {len(clients)} клиентов", 'ntrip')
                     self._send_data_to_clients(clients, buffer, mount_name)
     
     def _send_data_to_clients(self, clients, buffer, mount_name):
@@ -401,6 +401,11 @@ class SimpleDataForwarder:
             last_sent_timestamp = client_info['last_sent_timestamp']
             new_data = buffer.get_since(last_sent_timestamp)
             
+            # Логирование только при отсутствии данных (для диагностики, можно убрать позже)
+            # if not new_data:
+            #     buffer_stats = buffer.get_stats()
+            #     logger.log_debug(f"Нет новых данных для клиента {client_info['user']}@{client_info['mount']}", 'ntrip')
+            
             if new_data:
                 bytes_sent = self._send_data_simple(client_info, new_data)
                 
@@ -413,8 +418,8 @@ class SimpleDataForwarder:
                     self.stats['total_bytes_sent'] += bytes_sent
                     self.stats['total_messages_sent'] += len(new_data)
                     
-                    # Временно логируем отправку данных для диагностики
-                    logger.log_info(f"Отправлено {bytes_sent} байт ({len(new_data)} сообщений) клиенту {client_info['user']}@{client_info['mount']} от {client_info['addr'][0]}", 'ntrip')
+                    # Логирование отправки данных (можно убрать или перевести на DEBUG)
+                    # logger.log_debug(f"Отправлено {bytes_sent} байт ({len(new_data)} сообщений) клиенту {client_info['user']}@{client_info['mount']}", 'ntrip')
                     
                     if client_info.get('connection_id'):
                         # Тихие обновления активности пользователя, без генерации логов
@@ -442,16 +447,21 @@ class SimpleDataForwarder:
             total_bytes_sent = 0
             
             for timestamp, data in data_list:
-                if protocol_version == 'ntrip2_0':
-                    # NTRIP 2.0 использует кодировку фрагментами
-                    chunk_size = hex(len(data))[2:].upper().encode('ascii')
-                    chunk_data = chunk_size + b'\r\n' + data + b'\r\n'
-                    socket_obj.sendall(chunk_data)
-                    total_bytes_sent += len(chunk_data)
-                else:
-                    # NTRIP 1.0 отправляет напрямую
-                    socket_obj.sendall(data)
-                    total_bytes_sent += len(data)
+                # Внимание: Принудительно отправляем данные в сыром виде для всех версий протокола.
+                # Практика показала, что многие роверы, заявляющие NTRIP 2.0, не поддерживают chunked encoding.
+                # Отправка сырых данных (как в NTRIP 1.0) работает стабильнее.
+                socket_obj.sendall(data)
+                total_bytes_sent += len(data)
+                
+                # Старая реализация с chunked encoding (для истории):
+                # if protocol_version == 'ntrip2_0':
+                #     chunk_size = hex(len(data))[2:].upper().encode('ascii')
+                #     chunk_data = chunk_size + b'\r\n' + data + b'\r\n'
+                #     socket_obj.sendall(chunk_data)
+                #     total_bytes_sent += len(chunk_data)
+                # else:
+                #     socket_obj.sendall(data)
+                #     total_bytes_sent += len(data)
             
             return total_bytes_sent
             
