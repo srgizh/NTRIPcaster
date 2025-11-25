@@ -1409,10 +1409,12 @@ a=control:*
     def send_download_success_response(self):
         """Отправить ответ об успешном скачивании"""
         if self.ntrip_version == "2.0":
+            # Для NTRIP 2.0 обязательно нужно добавить заголовок Ntrip-Version
+            headers = ["Connection: keep-alive", "Ntrip-Version: NTRIP/2.0"]
             self._send_response(
                 "HTTP/1.1 200 OK",
                 content_type="application/octet-stream",
-                additional_headers=["Connection: keep-alive"]
+                additional_headers=headers
             )
         else:
             # NTRIP 1.0 формат - принудительно поддерживать соединение, игнорировать Connection: close от клиента

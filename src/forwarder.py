@@ -388,6 +388,7 @@ class SimpleDataForwarder:
     def _send_to_client(self, client_info, buffer):
         """Отправка данных одному клиенту"""
         try:
+            current_time = time.time()
             
             last_sent_timestamp = client_info['last_sent_timestamp']
             new_data = buffer.get_since(last_sent_timestamp)
@@ -398,7 +399,6 @@ class SimpleDataForwarder:
                 
                 if bytes_sent > 0:
                    
-                    current_time = time.time()
                     client_info['last_seen'] = current_time
                     client_info['last_sent_timestamp'] = new_data[-1][0]
                     client_info['bytes_sent'] += bytes_sent
@@ -414,6 +414,10 @@ class SimpleDataForwarder:
                             client_info['connection_id'], 
                             bytes_sent
                         )
+            else:
+                # Даже если нет новых данных, обновляем last_seen, чтобы соединение считалось активным
+                # Это помогает предотвратить преждевременные отключения из-за таймаутов
+                client_info['last_seen'] = current_time
         
         except Exception as e:
             # Записываем предупреждения только для ошибок, не связанных с сетью
