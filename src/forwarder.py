@@ -325,8 +325,8 @@ class SimpleDataForwarder:
             self.mount_buffers[mount].append(data_chunk, timestamp)
             buffer_size = len(self.mount_buffers[mount].buffer)
         
-        # Логирование получения данных (можно убрать или перевести на DEBUG)
-        # logger.log_debug(f"Получены данные от точки монтирования {mount}: {len(data_chunk)} байт", 'ntrip')
+        # Временно логируем получение данных, чтобы убедиться, что поток RTCM приходит стабильно
+        logger.log_info(f"Получены данные от точки монтирования {mount}: {len(data_chunk)} байт, размер буфера: {buffer_size}", 'ntrip')
         
         self._send_to_subscribers(mount, data_chunk)
         
@@ -418,8 +418,11 @@ class SimpleDataForwarder:
                     self.stats['total_bytes_sent'] += bytes_sent
                     self.stats['total_messages_sent'] += len(new_data)
                     
-                    # Логирование отправки данных (можно убрать или перевести на DEBUG)
-                    # logger.log_debug(f"Отправлено {bytes_sent} байт ({len(new_data)} сообщений) клиенту {client_info['user']}@{client_info['mount']}", 'ntrip')
+                    # Временно логируем отправку данных
+                    logger.log_info(
+                        f"Отправлено {bytes_sent} байт ({len(new_data)} сообщений) клиенту {client_info['user']}@{client_info['mount']} от {client_info['addr'][0]}",
+                        'ntrip'
+                    )
                     
                     if client_info.get('connection_id'):
                         # Тихие обновления активности пользователя, без генерации логов
@@ -429,8 +432,7 @@ class SimpleDataForwarder:
                             bytes_sent
                         )
             else:
-                # Даже если нет новых данных, обновляем last_seen, чтобы соединение считалось активным
-                # Это помогает предотвратить преждевременные отключения из-за таймаутов
+                # Даже если нет новых данных, обновляем last_seen
                 client_info['last_seen'] = current_time
         
         except Exception as e:
