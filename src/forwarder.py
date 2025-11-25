@@ -323,6 +323,10 @@ class SimpleDataForwarder:
         
         with self.buffer_lock:
             self.mount_buffers[mount].append(data_chunk, timestamp)
+            buffer_size = len(self.mount_buffers[mount].buffer)
+        
+        # Временно логируем получение данных для диагностики  
+        logger.log_info(f"Получены данные от точки монтирования {mount}: {len(data_chunk)} байт, размер буфера: {buffer_size}", 'ntrip')
         
         self._send_to_subscribers(mount, data_chunk)
         
@@ -368,6 +372,10 @@ class SimpleDataForwarder:
             with self.client_lock:
                 if mount_name in self.clients:
                     clients = self.clients[mount_name][:]
+                    if clients:
+                        # Временно логируем для диагностики
+                        buffer_stats = buffer.get_stats()
+                        logger.log_info(f"Рассылка данных для точки монтирования {mount_name}: {len(clients)} клиентов, размер буфера: {buffer_stats['size']}", 'ntrip')
                     self._send_data_to_clients(clients, buffer, mount_name)
     
     def _send_data_to_clients(self, clients, buffer, mount_name):
@@ -394,11 +402,9 @@ class SimpleDataForwarder:
             new_data = buffer.get_since(last_sent_timestamp)
             
             if new_data:
-                
                 bytes_sent = self._send_data_simple(client_info, new_data)
                 
                 if bytes_sent > 0:
-                   
                     client_info['last_seen'] = current_time
                     client_info['last_sent_timestamp'] = new_data[-1][0]
                     client_info['bytes_sent'] += bytes_sent
@@ -406,6 +412,9 @@ class SimpleDataForwarder:
                     
                     self.stats['total_bytes_sent'] += bytes_sent
                     self.stats['total_messages_sent'] += len(new_data)
+                    
+                    # Временно логируем отправку данных для диагностики
+                    logger.log_info(f"Отправлено {bytes_sent} байт ({len(new_data)} сообщений) клиенту {client_info['user']}@{client_info['mount']} от {client_info['addr'][0]}", 'ntrip')
                     
                     if client_info.get('connection_id'):
                         # Тихие обновления активности пользователя, без генерации логов

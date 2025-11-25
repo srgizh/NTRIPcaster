@@ -1238,6 +1238,8 @@ a=control:*
                         logger.log_debug(f"Подключение к точке монтирования {mount} закрыто", 'ntrip')
                         break
                     
+                    # Временно логируем получение данных от базы
+                    logger.log_info(f"Получены данные от базы {mount}: {len(data)} байт", 'ntrip')
                     forwarder.upload_data(mount, data)
 
                     connection.get_connection_manager().update_mount_data_stats(mount, len(data))
