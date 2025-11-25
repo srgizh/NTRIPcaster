@@ -1412,12 +1412,11 @@ a=control:*
         """Отправить ответ об успешном скачивании"""
         if self.ntrip_version == "2.0":
             # Для NTRIP 2.0 обязательно нужно добавить заголовок Ntrip-Version
-            # Внимание: Убрали Transfer-Encoding: chunked, так как многие роверы (например, South)
-            # заявляют поддержку NTRIP 2.0, но не умеют читать chunked-поток, ожидая сырые данные.
-            headers = ["Connection: keep-alive", "Ntrip-Version: NTRIP/2.0"]
+            # Исправление: Content-Type должен быть gnss/data согласно стандарту
+            headers = ["Connection: close", "Ntrip-Version: NTRIP/2.0"]
             self._send_response(
                 "HTTP/1.1 200 OK",
-                content_type="application/octet-stream",
+                content_type="gnss/data",
                 additional_headers=headers
             )
         else:
