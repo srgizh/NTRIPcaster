@@ -1,34 +1,34 @@
-# NTRIP Caster Linux 系统安装教程
+# Руководство по установке NTRIP Caster в Linux
 
-在 Linux 系统上直接安装和部署 NTRIP Caster v2.2.0，支持 Debian、Ubuntu、CentOS、RHEL 等主流发行版。
+Прямая установка и развертывание NTRIP Caster v2.2.0 в Linux, поддерживаются основные дистрибутивы: Debian, Ubuntu, CentOS, RHEL и другие.
 
-## 目录
-- [系统要求](#系统要求)
-- [快速安装](#快速安装)
-- [一键安装脚本](#一键安装脚本)
-- [详细安装步骤](#详细安装步骤)
-- [配置说明](#配置说明)
-- [服务管理](#服务管理)
-- [常见问题](#常见问题)
-- [性能优化](#性能优化)
-- [安全配置](#安全配置)
+## Содержание
+- [Системные требования](#системные-требования)
+- [Быстрая установка](#быстрая-установка)
+- [Скрипт автоматической установки](#скрипт-автоматической-установки)
+- [Подробные шаги установки](#подробные-шаги-установки)
+- [Описание конфигурации](#описание-конфигурации)
+- [Управление службой](#управление-службой)
+- [Часто задаваемые вопросы](#часто-задаваемые-вопросы)
+- [Оптимизация производительности](#оптимизация-производительности)
+- [Настройка безопасности](#настройка-безопасности)
 
-## 系统要求
+## Системные требования
 
-### 最低要求
-- **操作系统**: Linux (Debian 10+, Ubuntu 18.04+, CentOS 7+, RHEL 7+)
-- **CPU**: 1 核心
-- **内存**: 512MB RAM
-- **存储**: 1GB 可用空间
-- **Python**: 3.8+ (推荐 3.11)
+### Минимальные требования
+- **Операционная система**: Linux (Debian 10+, Ubuntu 18.04+, CentOS 7+, RHEL 7+)
+- **CPU**: 1 ядро
+- **Память**: 512MB RAM
+- **Хранилище**: 1GB свободного места
+- **Python**: 3.8+ (рекомендуется 3.11)
 
-### 推荐配置
-- **CPU**: 2+ 核心
-- **内存**: 2GB+ RAM
-- **存储**: 10GB+ 可用空间
-- **网络**: 稳定的网络连接
+### Рекомендуемая конфигурация
+- **CPU**: 2+ ядра
+- **Память**: 2GB+ RAM
+- **Хранилище**: 10GB+ свободного места
+- **Сеть**: стабильное сетевое соединение
 
-### 支持的发行版
+### Поддерживаемые дистрибутивы
 - Debian 10/11/12 (Buster/Bullseye/Bookworm)
 - Ubuntu 18.04/20.04/22.04/24.04 LTS
 - CentOS 7/8/9
@@ -38,166 +38,166 @@
 - openSUSE Leap 15.x
 - Fedora 35+
 
-### 手动快速安装
+### Быстрая ручная установка
 
 ```bash
-# 1. 克隆项目
-git clone https://github.com/Rampump/NTRIPcaster.git
+# 1. Клонирование проекта
+git clone https://github.com/srgizh/NTRIPcaster.git
 cd NTRIPcaster
 
-# 2. 运行安装脚本
+# 2. Запуск скрипта установки
 sudo chmod +x install.sh
 sudo ./install.sh
 
-# 3. 启动服务
+# 3. Запуск службы
 sudo systemctl start ntripcaster
 sudo systemctl enable ntripcaster
 ```
 
-## 一键安装脚本
+## Скрипт автоматической установки
 
-### 自动安装脚本
+### Автоматический скрипт установки
 
-我们提供了一个自动安装脚本，可以在大多数 Linux 发行版上一键安装 NTRIP Caster。
+Предоставляется автоматический скрипт установки, который может установить NTRIP Caster одним кликом в большинстве дистрибутивов Linux.
 
-#### 使用方法
+#### Способы использования
 
-**方法一：直接下载并执行（推荐）**
+**Способ 1: Прямая загрузка и выполнение (рекомендуется)**
 ```bash
-# 下载并运行安装脚本
-wget -O - https://raw.githubusercontent.com/Rampump/NTRIPcaster/main/install.sh | sudo bash
+# Загрузка и запуск скрипта установки
+wget -O - https://raw.githubusercontent.com/srgizh/NTRIPcaster/main/install.sh | sudo bash
 ```
 
-**方法二：下载后执行**
+**Способ 2: Загрузка и последующее выполнение**
 ```bash
-# 下载脚本到本地
-wget https://raw.githubusercontent.com/Rampump/NTRIPcaster/main/install.sh
+# Загрузка скрипта в локальную систему
+wget https://raw.githubusercontent.com/srgizh/NTRIPcaster/main/install.sh
 chmod +x install.sh
 sudo ./install.sh
 ```
 
-> **注意**：脚本会自动从GitHub下载最新的项目文件，无需手动克隆仓库。
+> **Примечание**: Скрипт автоматически загрузит последние файлы проекта с GitHub, нет необходимости вручную клонировать репозиторий.
 
-#### 脚本功能
+#### Функции скрипта
 
-安装脚本会自动完成以下操作：
+Скрипт установки автоматически выполнит следующие операции:
 
-1. **检测系统环境**
-   - 自动识别 Linux 发行版（Debian/Ubuntu/CentOS/RHEL/openSUSE 等）
-   - 检查系统版本和架构
-   - 验证必要的系统权限
+1. **Проверка системного окружения**
+   - Автоматическое определение дистрибутива Linux (Debian/Ubuntu/CentOS/RHEL/openSUSE и т.д.)
+   - Проверка версии системы и архитектуры
+   - Проверка необходимых системных прав
 
-2. **安装系统依赖**
-   - 更新系统包管理器
-   - 安装 Python 3.8+ 和相关开发工具
-   - 安装 Git、SQLite、Nginx 等必要组件
-   - 配置防火墙规则
+2. **Установка системных зависимостей**
+   - Обновление менеджера пакетов системы
+   - Установка Python 3.8+ и связанных инструментов разработки
+   - Установка необходимых компонентов (Git, SQLite, Nginx и т.д.)
+   - Настройка правил файрвола
 
-3. **创建系统用户和目录**
-   - 创建专用的 `ntripcaster` 系统用户
-   - 建立应用目录结构 (`/opt/ntripcaster`)
-   - 设置日志目录 (`/var/log/ntripcaster`)
-   - 配置适当的文件权限
+3. **Создание системного пользователя и каталогов**
+   - Создание выделенного системного пользователя `ntripcaster`
+   - Создание структуры каталогов приложения (`/opt/ntripcaster`)
+   - Настройка каталога логов (`/var/log/ntripcaster`)
+   - Настройка соответствующих прав доступа к файлам
 
-4. **下载和配置应用**
-   - 自动从 GitHub 克隆最新源码（无需手动下载）
-   - 创建 Python 虚拟环境
-   - 安装 Python 依赖包
-   - 生成默认配置文件
+4. **Загрузка и настройка приложения**
+   - Автоматическое клонирование последнего исходного кода с GitHub (не требуется ручная загрузка)
+   - Создание виртуального окружения Python
+   - Установка зависимостей Python
+   - Генерация конфигурационного файла по умолчанию
 
-5. **配置系统服务**
-   - 创建 systemd 服务文件
-   - 启用开机自启动
-   - 启动 NTRIP Caster 服务
-   - 配置日志轮转
+5. **Настройка системной службы**
+   - Создание файла службы systemd
+   - Включение автозапуска при загрузке
+   - Запуск службы NTRIP Caster
+   - Настройка ротации логов
 
-6. **网络配置**
-   - 开放必要的端口（2101, 5757）
-   - 配置防火墙规则
-   - 可选配置 Nginx 反向代理
+6. **Настройка сети**
+   - Открытие необходимых портов (2101, 5757)
+   - Настройка правил файрвола
+   - Опциональная настройка обратного прокси Nginx
 
-#### 安装选项
+#### Параметры установки
 
-脚本支持以下环境变量来自定义安装：
+Скрипт поддерживает следующие переменные окружения для настройки установки:
 
 ```bash
-# 指定安装目录
+# Указание каталога установки
 export INSTALL_DIR="/opt/ntripcaster"
 
-# 指定用户名
+# Указание имени пользователя
 export NTRIP_USER="ntripcaster"
 
-# 指定端口
+# Указание портов
 export NTRIP_PORT="2101"
 export WEB_PORT="5757"
 
-# 是否安装 Nginx 反向代理
+# Установка обратного прокси Nginx
 export INSTALL_NGINX="true"
 
-# 是否启用 SSL
+# Включение SSL
 export ENABLE_SSL="false"
 
-# 运行安装脚本
+# Запуск скрипта установки
 sudo -E ./install.sh
 ```
 
-#### 验证安装
+#### Проверка установки
 
-安装完成后，脚本会自动验证安装结果：
+После завершения установки скрипт автоматически проверит результат установки:
 
 ```bash
-# 检查服务状态
+# Проверка статуса службы
 sudo systemctl status ntripcaster
 
-# 检查端口监听
+# Проверка прослушивания портов
 sudo netstat -tlnp | grep :2101
 sudo netstat -tlnp | grep :5757
 
-# 访问 Web 界面
+# Доступ к веб-интерфейсу
 curl -I http://localhost:5757
 ```
 
-#### 卸载
+#### Удаление
 
-如需卸载，可以使用卸载脚本：
+Для удаления можно использовать скрипт удаления:
 
 ```bash
-# 下载并运行卸载脚本
-wget -O - https://raw.githubusercontent.com/Rampump/NTRIPcaster/main/uninstall.sh | sudo bash
+# Загрузка и запуск скрипта удаления
+wget -O - https://raw.githubusercontent.com/srgizh/NTRIPcaster/main/uninstall.sh | sudo bash
 ```
 
-### 快速验证
+### Быстрая проверка
 
-安装完成后，您可以通过以下方式快速验证：
+После завершения установки вы можете быстро проверить следующим образом:
 
-1. **检查服务状态**：
+1. **Проверка статуса службы**:
    ```bash
    sudo systemctl status ntripcaster
    ```
 
-2. **访问 Web 管理界面**：
-   打开浏览器访问 `http://your-server-ip:5757`
+2. **Доступ к веб-интерфейсу управления**:
+   Откройте браузер и перейдите по адресу `http://your-server-ip:5757`
    
-   默认登录信息：
-   - 用户名：`admin`
-   - 密码：`admin123`
+   Учетные данные по умолчанию:
+   - Имя пользователя: `admin`
+   - Пароль: `admin123`
 
-3. **测试 NTRIP 连接**：
+3. **Тестирование NTRIP-подключения**:
    ```bash
    telnet localhost 2101
    ```
 
-## 详细安装步骤
+## Подробные шаги установки
 
-### 1. 系统准备
+### 1. Подготовка системы
 
-#### Debian/Ubuntu 系统
+#### Системы Debian/Ubuntu
 
 ```bash
-# 更新系统包
+# Обновление системных пакетов
 sudo apt update && sudo apt upgrade -y
 
-# 安装必要的系统包
+# Установка необходимых системных пакетов
 sudo apt install -y \
     python3 \
     python3-pip \
@@ -213,11 +213,11 @@ sudo apt install -y \
     supervisor \
     nginx
 
-# 安装 systemd 开发包（如果需要）
+# Установка пакетов разработки systemd (при необходимости)
 sudo apt install -y libsystemd-dev
 ```
 
-#### CentOS/RHEL 系统
+#### Системы CentOS/RHEL
 
 ```bash
 # CentOS 7
@@ -237,7 +237,7 @@ sudo yum install -y \
     supervisor \
     nginx
 
-# CentOS 8/9 或 RHEL 8/9
+# CentOS 8/9 или RHEL 8/9
 sudo dnf update -y
 sudo dnf install -y epel-release
 sudo dnf install -y \
@@ -255,13 +255,13 @@ sudo dnf install -y \
     nginx
 ```
 
-#### openSUSE 系统
+#### Системы openSUSE
 
 ```bash
-# 更新系统
+# Обновление системы
 sudo zypper refresh && sudo zypper update -y
 
-# 安装必要包
+# Установка необходимых пакетов
 sudo zypper install -y \
     python3 \
     python3-pip \
@@ -277,36 +277,36 @@ sudo zypper install -y \
     nginx
 ```
 
-### 2. 创建系统用户
+### 2. Создание системного пользователя
 
 ```bash
-# 创建专用用户
+# Создание выделенного пользователя
 sudo useradd -r -s /bin/false -d /opt/ntripcaster ntripcaster
 
-# 创建应用目录
+# Создание каталогов приложения
 sudo mkdir -p /opt/ntripcaster
 sudo mkdir -p /var/log/ntripcaster
 sudo mkdir -p /etc/ntripcaster
 
-# 设置目录权限
+# Установка прав доступа к каталогам
 sudo chown -R ntripcaster:ntripcaster /opt/ntripcaster
 sudo chown -R ntripcaster:ntripcaster /var/log/ntripcaster
 sudo chown -R ntripcaster:ntripcaster /etc/ntripcaster
 ```
 
-### 3. 下载和安装应用
+### 3. Загрузка и установка приложения
 
 ```bash
-# 切换到应用目录
+# Переход в каталог приложения
 cd /opt/ntripcaster
 
-# 下载源码
-sudo -u ntripcaster git clone https://github.com/Rampump/NTRIPcaster.git 
+# Загрузка исходного кода
+sudo -u ntripcaster git clone https://github.com/srgizh/NTRIPcaster.git 
 
-# 创建 Python 虚拟环境
+# Создание виртуального окружения Python
 sudo -u ntripcaster python3 -m venv venv
 
-# 激活虚拟环境并安装依赖
+# Активация виртуального окружения и установка зависимостей
 sudo -u ntripcaster bash -c '
     source venv/bin/activate
     pip install --upgrade pip setuptools wheel
@@ -314,17 +314,17 @@ sudo -u ntripcaster bash -c '
 '
 ```
 
-### 4. 配置应用
+### 4. Настройка приложения
 
 ```bash
-# 复制配置文件
+# Копирование конфигурационного файла
 sudo -u ntripcaster cp config.ini.example /etc/ntripcaster/config.ini
 
-# 编辑配置文件
+# Редактирование конфигурационного файла
 sudo nano /etc/ntripcaster/config.ini
 ```
 
-#### 主要配置项：
+#### Основные параметры конфигурации:
 
 ```ini
 [app]
@@ -357,17 +357,17 @@ password_hash_rounds = 12
 session_timeout = 3600
 ```
 
-### 5. 生成密钥和初始化数据库
+### 5. Генерация ключа и инициализация базы данных
 
 ```bash
-# 生成安全密钥
+# Генерация безопасного ключа
 SECRET_KEY=$(openssl rand -hex 32)
 sudo sed -i "s/your-secret-key-here/$SECRET_KEY/g" /etc/ntripcaster/config.ini
 
-# 创建数据目录
+# Создание каталога данных
 sudo -u ntripcaster mkdir -p /opt/ntripcaster/data
 
-# 初始化数据库（如果应用支持）
+# Инициализация базы данных (если приложение поддерживает)
 sudo -u ntripcaster bash -c '
     cd /opt/ntripcaster
     source venv/bin/activate
@@ -375,10 +375,10 @@ sudo -u ntripcaster bash -c '
 '
 ```
 
-### 6. 创建 systemd 服务
+### 6. Создание службы systemd
 
 ```bash
-# 创建服务文件
+# Создание файла службы
 sudo tee /etc/systemd/system/ntripcaster.service > /dev/null <<EOF
 [Unit]
 Description=NTRIP Caster Service
@@ -399,14 +399,14 @@ RestartSec=10
 KillMode=mixed
 TimeoutStopSec=30
 
-# 安全设置
+# Настройки безопасности
 NoNewPrivileges=true
 PrivateTmp=true
 ProtectSystem=strict
 ProtectHome=true
 ReadWritePaths=/opt/ntripcaster/data /var/log/ntripcaster /etc/ntripcaster
 
-# 资源限制
+# Ограничения ресурсов
 LimitNOFILE=65536
 LimitNPROC=4096
 
@@ -414,65 +414,65 @@ LimitNPROC=4096
 WantedBy=multi-user.target
 EOF
 
-# 重新加载 systemd 配置
+# Перезагрузка конфигурации systemd
 sudo systemctl daemon-reload
 ```
 
-### 7. 配置防火墙
+### 7. Настройка файрвола
 
 #### UFW (Ubuntu/Debian)
 
 ```bash
-# 启用 UFW
+# Включение UFW
 sudo ufw enable
 
-# 开放必要端口
+# Открытие необходимых портов
 sudo ufw allow 2101/tcp comment 'NTRIP Service'
 sudo ufw allow 5757/tcp comment 'NTRIP Web Interface'
 sudo ufw allow ssh
 
-# 查看状态
+# Просмотр статуса
 sudo ufw status
 ```
 
 #### firewalld (CentOS/RHEL)
 
 ```bash
-# 启动 firewalld
+# Запуск firewalld
 sudo systemctl start firewalld
 sudo systemctl enable firewalld
 
-# 开放端口
+# Открытие портов
 sudo firewall-cmd --permanent --add-port=2101/tcp
 sudo firewall-cmd --permanent --add-port=5757/tcp
 sudo firewall-cmd --reload
 
-# 查看状态
+# Просмотр статуса
 sudo firewall-cmd --list-all
 ```
 
-#### iptables (通用)
+#### iptables (универсально)
 
 ```bash
-# 开放端口
+# Открытие портов
 sudo iptables -A INPUT -p tcp --dport 2101 -j ACCEPT
 sudo iptables -A INPUT -p tcp --dport 5757 -j ACCEPT
 
-# 保存规则 (Debian/Ubuntu)
+# Сохранение правил (Debian/Ubuntu)
 sudo iptables-save > /etc/iptables/rules.v4
 
-# 保存规则 (CentOS/RHEL)
+# Сохранение правил (CentOS/RHEL)
 sudo service iptables save
 ```
 
-## 配置说明
+## Описание конфигурации
 
-### 环境变量
+### Переменные окружения
 
-可以通过环境变量覆盖配置文件设置：
+Можно переопределить настройки конфигурационного файла через переменные окружения:
 
 ```bash
-# 在 /etc/systemd/system/ntripcaster.service 中添加
+# Добавить в /etc/systemd/system/ntripcaster.service
 Environment=NTRIP_PORT=2101
 Environment=WEB_PORT=5757
 Environment=DEBUG_MODE=false
@@ -480,10 +480,10 @@ Environment=DATABASE_PATH=/opt/ntripcaster/data/2rtk.db
 Environment=LOG_LEVEL=INFO
 ```
 
-### 日志配置
+### Конфигурация логирования
 
 ```bash
-# 配置 logrotate
+# Настройка logrotate
 sudo tee /etc/logrotate.d/ntripcaster > /dev/null <<EOF
 /var/log/ntripcaster/*.log {
     daily
@@ -500,87 +500,87 @@ sudo tee /etc/logrotate.d/ntripcaster > /dev/null <<EOF
 EOF
 ```
 
-## 服务管理
+## Управление службой
 
-### 基本操作
+### Основные операции
 
 ```bash
-# 启动服务
+# Запуск службы
 sudo systemctl start ntripcaster
 
-# 停止服务
+# Остановка службы
 sudo systemctl stop ntripcaster
 
-# 重启服务
+# Перезапуск службы
 sudo systemctl restart ntripcaster
 
-# 重新加载配置
+# Перезагрузка конфигурации
 sudo systemctl reload ntripcaster
 
-# 查看服务状态
+# Просмотр статуса службы
 sudo systemctl status ntripcaster
 
-# 设置开机自启
+# Включение автозапуска при загрузке
 sudo systemctl enable ntripcaster
 
-# 禁用开机自启
+# Отключение автозапуска при загрузке
 sudo systemctl disable ntripcaster
 ```
 
-### 日志查看
+### Просмотр логов
 
 ```bash
-# 查看服务日志
+# Просмотр логов службы
 sudo journalctl -u ntripcaster
 
-# 实时查看日志
+# Просмотр логов в реальном времени
 sudo journalctl -u ntripcaster -f
 
-# 查看应用日志
+# Просмотр логов приложения
 sudo tail -f /var/log/ntripcaster/main.log
 
-# 查看错误日志
+# Просмотр логов ошибок
 sudo grep ERROR /var/log/ntripcaster/main.log
 ```
 
-### 服务监控
+### Мониторинг службы
 
 ```bash
-# 检查服务是否运行
+# Проверка, запущена ли служба
 sudo systemctl is-active ntripcaster
 
-# 检查端口监听
+# Проверка прослушивания портов
 sudo netstat -tlnp | grep -E ':(2101|5757)'
-# 或者使用 ss
+# или использовать ss
 sudo ss -tlnp | grep -E ':(2101|5757)'
 
-# 检查进程
+# Проверка процессов
 sudo ps aux | grep ntripcaster
 ```
 
-## 常见问题
+## Часто задаваемые вопросы
 
-### Q1: 服务启动失败
+### Q1: Служба не запускается
 
-**排查步骤：**
+**Шаги диагностики:**
 
 ```bash
-# 查看详细错误信息
+# Просмотр подробной информации об ошибке
 sudo journalctl -u ntripcaster -n 50
 
-# 检查配置文件语法
+# Проверка синтаксиса конфигурационного файла
 sudo -u ntripcaster bash -c '
     cd /opt/ntripcaster
     source venv/bin/activate
     python -c "import configparser; c=configparser.ConfigParser(); c.read("/etc/ntripcaster/config.ini")"
 '
 
-# 检查文件权限
+# Проверка прав доступа к файлам
 sudo ls -la /opt/ntripcaster/
 sudo ls -la /etc/ntripcaster/
 sudo ls -la /var/log/ntripcaster/
 
-# 手动测试启动
+# Ручной тестовый запуск
 sudo -u ntripcaster bash -c '
     cd /opt/ntripcaster
     source venv/bin/activate
@@ -588,37 +588,37 @@ sudo -u ntripcaster bash -c '
 '
 ```
 
-### Q2: 端口被占用
+### Q2: Порт занят
 
 ```bash
-# 查看端口占用
+# Просмотр использования порта
 sudo lsof -i :2101
 sudo lsof -i :5757
 
-# 杀死占用进程
+# Убить процесс, занимающий порт
 sudo kill -9 <PID>
 
-# 或者修改配置文件中的端口
+# Или изменить порт в конфигурационном файле
 sudo nano /etc/ntripcaster/config.ini
 ```
 
-### Q3: 权限问题
+### Q3: Проблемы с правами доступа
 
 ```bash
-# 重新设置权限
+# Повторная установка прав доступа
 sudo chown -R ntripcaster:ntripcaster /opt/ntripcaster
 sudo chown -R ntripcaster:ntripcaster /var/log/ntripcaster
 sudo chown -R ntripcaster:ntripcaster /etc/ntripcaster
 
-# 检查 SELinux (CentOS/RHEL)
+# Проверка SELinux (CentOS/RHEL)
 sudo getenforce
 sudo setsebool -P httpd_can_network_connect 1
 ```
 
-### Q4: Python 依赖问题
+### Q4: Проблемы с зависимостями Python
 
 ```bash
-# 重新安装依赖
+# Переустановка зависимостей
 sudo -u ntripcaster bash -c '
     cd /opt/ntripcaster
     source venv/bin/activate
@@ -626,10 +626,10 @@ sudo -u ntripcaster bash -c '
     pip install -r requirements.txt --force-reinstall
 '
 
-# 检查 Python 版本
+# Проверка версии Python
 python3 --version
 
-# 如果 Python 版本过低，安装新版本
+# Если версия Python слишком старая, установить новую версию
 # Ubuntu/Debian
 sudo apt install software-properties-common
 sudo add-apt-repository ppa:deadsnakes/ppa
@@ -637,13 +637,13 @@ sudo apt update
 sudo apt install python3.11 python3.11-venv python3.11-dev
 ```
 
-### Q5: 数据库问题
+### Q5: Проблемы с базой данных
 
 ```bash
-# 检查数据库文件
+# Проверка файла базы данных
 sudo ls -la /opt/ntripcaster/data/
 
-# 重新初始化数据库
+# Повторная инициализация базы данных
 sudo -u ntripcaster bash -c '
     cd /opt/ntripcaster
     source venv/bin/activate
@@ -651,16 +651,16 @@ sudo -u ntripcaster bash -c '
     python -c "from src.database import init_db; init_db()"
 '
 
-# 检查数据库完整性
+# Проверка целостности базы данных
 sudo -u ntripcaster sqlite3 /opt/ntripcaster/data/2rtk.db "PRAGMA integrity_check;"
 ```
 
-## 性能优化
+## Оптимизация производительности
 
-### 1. 系统优化
+### 1. Оптимизация системы
 
 ```bash
-# 优化文件描述符限制
+# Оптимизация ограничений файловых дескрипторов
 sudo tee -a /etc/security/limits.conf > /dev/null <<EOF
 ntripcaster soft nofile 65536
 ntripcaster hard nofile 65536
@@ -668,9 +668,9 @@ ntripcaster soft nproc 4096
 ntripcaster hard nproc 4096
 EOF
 
-# 优化网络参数
+# Оптимизация сетевых параметров
 sudo tee -a /etc/sysctl.conf > /dev/null <<EOF
-# NTRIP Caster 网络优化
+# Сетевая оптимизация NTRIP Caster
 net.core.somaxconn = 1024
 net.core.netdev_max_backlog = 5000
 net.ipv4.tcp_max_syn_backlog = 1024
@@ -679,154 +679,154 @@ net.ipv4.tcp_keepalive_intvl = 60
 net.ipv4.tcp_keepalive_probes = 3
 EOF
 
-# 应用系统参数
+# Применение системных параметров
 sudo sysctl -p
 ```
 
-### 2. 应用优化
+### 2. Оптимизация приложения
 
-编辑配置文件 `/etc/ntripcaster/config.ini`：
+Редактирование конфигурационного файла `/etc/ntripcaster/config.ini`:
 
 ```ini
 [performance]
-# 线程池大小
+# Размер пула потоков
 thread_pool_size = 10
 
-# 最大工作线程数
+# Максимальное количество рабочих потоков
 max_workers = 20
 
-# 连接队列大小
+# Размер очереди подключений
 connection_queue_size = 100
 
-# 最大内存使用 (MB)
+# Максимальное использование памяти (MB)
 max_memory_usage = 512
 
-# CPU 使用警告阈值 (%)
+# Порог предупреждения использования CPU (%)
 cpu_warning_threshold = 80
 
-# 内存使用警告阈值 (%)
+# Порог предупреждения использования памяти (%)
 memory_warning_threshold = 85
 
 [network]
-# 最大连接数
+# Максимальное количество подключений
 max_connections = 1000
 
-# 缓冲区大小
+# Размер буфера
 buffer_size = 8192
 
 [tcp]
-# TCP Keep-Alive 设置
+# Настройки TCP Keep-Alive
 keepalive_enable = true
 keepalive_idle = 600
 keepalive_interval = 60
 keepalive_count = 3
 
-# Socket 超时
+# Таймаут Socket
 socket_timeout = 30
 connection_timeout = 10
 ```
 
-### 3. 监控脚本
+### 3. Скрипт мониторинга
 
-创建监控脚本 `/opt/ntripcaster/monitor.sh`：
+Создание скрипта мониторинга `/opt/ntripcaster/monitor.sh`:
 
 ```bash
 #!/bin/bash
 
-# NTRIP Caster 监控脚本
+# Скрипт мониторинга NTRIP Caster
 
 LOG_FILE="/var/log/ntripcaster/monitor.log"
 PID_FILE="/var/run/ntripcaster.pid"
 
-# 检查服务状态
+# Проверка статуса службы
 check_service() {
     if ! systemctl is-active --quiet ntripcaster; then
-        echo "$(date): NTRIP Caster service is not running, attempting to restart..." >> $LOG_FILE
+        echo "$(date): Служба NTRIP Caster не запущена, попытка перезапуска..." >> $LOG_FILE
         systemctl start ntripcaster
         sleep 5
         if systemctl is-active --quiet ntripcaster; then
-            echo "$(date): NTRIP Caster service restarted successfully" >> $LOG_FILE
+            echo "$(date): Служба NTRIP Caster успешно перезапущена" >> $LOG_FILE
         else
-            echo "$(date): Failed to restart NTRIP Caster service" >> $LOG_FILE
+            echo "$(date): Не удалось перезапустить службу NTRIP Caster" >> $LOG_FILE
         fi
     fi
 }
 
-# 检查端口
+# Проверка портов
 check_ports() {
     if ! netstat -tlnp | grep -q ":2101"; then
-        echo "$(date): NTRIP port 2101 is not listening" >> $LOG_FILE
+        echo "$(date): Порт NTRIP 2101 не прослушивается" >> $LOG_FILE
     fi
     
     if ! netstat -tlnp | grep -q ":5757"; then
-        echo "$(date): Web port 5757 is not listening" >> $LOG_FILE
+        echo "$(date): Веб-порт 5757 не прослушивается" >> $LOG_FILE
     fi
 }
 
-# 检查内存使用
+# Проверка использования памяти
 check_memory() {
     MEMORY_USAGE=$(ps -o pid,ppid,cmd,%mem --sort=-%mem -C python3 | grep ntripcaster | awk '{print $4}' | head -1)
     if [ ! -z "$MEMORY_USAGE" ] && (( $(echo "$MEMORY_USAGE > 80" | bc -l) )); then
-        echo "$(date): High memory usage detected: ${MEMORY_USAGE}%" >> $LOG_FILE
+        echo "$(date): Обнаружено высокое использование памяти: ${MEMORY_USAGE}%" >> $LOG_FILE
     fi
 }
 
-# 执行检查
+# Выполнение проверок
 check_service
 check_ports
 check_memory
 
-echo "$(date): Monitor check completed" >> $LOG_FILE
+echo "$(date): Проверка мониторинга завершена" >> $LOG_FILE
 ```
 
-设置定时任务：
+Настройка задания cron:
 
 ```bash
-# 设置执行权限
+# Установка права на выполнение
 sudo chmod +x /opt/ntripcaster/monitor.sh
 
-# 添加到 crontab
+# Добавление в crontab
 sudo crontab -e
-# 添加以下行（每5分钟检查一次）
+# Добавить следующую строку (проверка каждые 5 минут)
 */5 * * * * /opt/ntripcaster/monitor.sh
 ```
 
-## 安全配置
+## Настройка безопасности
 
-### 1. SSL/TLS 配置
+### 1. Конфигурация SSL/TLS
 
-#### 生成自签名证书
+#### Генерация самоподписанного сертификата
 
 ```bash
-# 创建证书目录
+# Создание каталога сертификатов
 sudo mkdir -p /etc/ntripcaster/ssl
 
-# 生成私钥
+# Генерация закрытого ключа
 sudo openssl genrsa -out /etc/ntripcaster/ssl/server.key 2048
 
-# 生成证书签名请求
+# Генерация запроса на подпись сертификата
 sudo openssl req -new -key /etc/ntripcaster/ssl/server.key -out /etc/ntripcaster/ssl/server.csr
 
-# 生成自签名证书
+# Генерация самоподписанного сертификата
 sudo openssl x509 -req -days 365 -in /etc/ntripcaster/ssl/server.csr -signkey /etc/ntripcaster/ssl/server.key -out /etc/ntripcaster/ssl/server.crt
 
-# 设置权限
+# Установка прав доступа
 sudo chown -R ntripcaster:ntripcaster /etc/ntripcaster/ssl
 sudo chmod 600 /etc/ntripcaster/ssl/server.key
 sudo chmod 644 /etc/ntripcaster/ssl/server.crt
 ```
 
-#### 配置 Nginx 反向代理
+#### Настройка обратного прокси Nginx
 
 ```bash
-# 创建 Nginx 配置
+# Создание конфигурации Nginx
 sudo tee /etc/nginx/sites-available/ntripcaster > /dev/null <<EOF
 server {
     listen 80;
     listen 443 ssl http2;
     server_name your-domain.com;
 
-    # SSL 配置
+    # Конфигурация SSL
     ssl_certificate /etc/ntripcaster/ssl/server.crt;
     ssl_certificate_key /etc/ntripcaster/ssl/server.key;
     ssl_protocols TLSv1.2 TLSv1.3;
@@ -835,12 +835,12 @@ server {
     ssl_session_cache shared:SSL:10m;
     ssl_session_timeout 10m;
 
-    # HTTP 重定向到 HTTPS
+    # Перенаправление HTTP на HTTPS
     if (\$scheme != "https") {
         return 301 https://\$host\$request_uri;
     }
 
-    # Web 界面代理
+    # Прокси веб-интерфейса
     location / {
         proxy_pass http://127.0.0.1:5757;
         proxy_set_header Host \$host;
@@ -849,7 +849,7 @@ server {
         proxy_set_header X-Forwarded-Proto \$scheme;
     }
 
-    # NTRIP 服务代理
+    # Прокси службы NTRIP
     location /ntrip {
         proxy_pass http://127.0.0.1:2101;
         proxy_set_header Host \$host;
@@ -859,24 +859,24 @@ server {
 }
 EOF
 
-# 启用站点
+# Включение сайта
 sudo ln -s /etc/nginx/sites-available/ntripcaster /etc/nginx/sites-enabled/
 
-# 测试配置
+# Проверка конфигурации
 sudo nginx -t
 
-# 重启 Nginx
+# Перезапуск Nginx
 sudo systemctl restart nginx
 ```
 
-### 2. 访问控制
+### 2. Контроль доступа
 
 ```bash
-# 配置 fail2ban
+# Настройка fail2ban
 sudo apt install fail2ban  # Debian/Ubuntu
 sudo yum install fail2ban  # CentOS/RHEL
 
-# 创建 fail2ban 配置
+# Создание конфигурации fail2ban
 sudo tee /etc/fail2ban/jail.d/ntripcaster.conf > /dev/null <<EOF
 [ntripcaster]
 enabled = true
@@ -888,7 +888,7 @@ bantime = 3600
 findtime = 600
 EOF
 
-# 创建过滤规则
+# Создание правил фильтрации
 sudo tee /etc/fail2ban/filter.d/ntripcaster.conf > /dev/null <<EOF
 [Definition]
 failregex = ^.*Authentication failed.*from <HOST>.*$
@@ -897,107 +897,107 @@ failregex = ^.*Authentication failed.*from <HOST>.*$
 ignoreregex =
 EOF
 
-# 重启 fail2ban
+# Перезапуск fail2ban
 sudo systemctl restart fail2ban
 ```
 
-### 3. 定期备份
+### 3. Регулярное резервное копирование
 
-创建备份脚本 `/opt/ntripcaster/backup.sh`：
+Создание скрипта резервного копирования `/opt/ntripcaster/backup.sh`:
 
 ```bash
 #!/bin/bash
 
-# NTRIP Caster 备份脚本
+# Скрипт резервного копирования NTRIP Caster
 
 BACKUP_DIR="/opt/backups/ntripcaster"
 DATE=$(date +%Y%m%d_%H%M%S)
 BACKUP_FILE="ntripcaster_backup_$DATE.tar.gz"
 
-# 创建备份目录
+# Создание каталога резервных копий
 mkdir -p $BACKUP_DIR
 
-# 停止服务
+# Остановка службы
 systemctl stop ntripcaster
 
-# 创建备份
+# Создание резервной копии
 tar -czf $BACKUP_DIR/$BACKUP_FILE \
     /opt/ntripcaster \
     /etc/ntripcaster \
     /var/log/ntripcaster
 
-# 启动服务
+# Запуск службы
 systemctl start ntripcaster
 
-# 删除30天前的备份
+# Удаление резервных копий старше 30 дней
 find $BACKUP_DIR -name "ntripcaster_backup_*.tar.gz" -mtime +30 -delete
 
-echo "Backup completed: $BACKUP_DIR/$BACKUP_FILE"
+echo "Резервное копирование завершено: $BACKUP_DIR/$BACKUP_FILE"
 ```
 
-设置定时备份：
+Настройка регулярного резервного копирования:
 
 ```bash
-# 设置执行权限
+# Установка права на выполнение
 sudo chmod +x /opt/ntripcaster/backup.sh
 
-# 添加到 crontab（每天凌晨2点备份）
+# Добавление в crontab (резервное копирование каждый день в 2:00 ночи)
 sudo crontab -e
-# 添加以下行
+# Добавить следующую строку
 0 2 * * * /opt/ntripcaster/backup.sh
 ```
 
-## 卸载
+## Удаление
 
-如果需要完全卸载 NTRIP Caster：
+Если требуется полностью удалить NTRIP Caster:
 
 ```bash
-# 停止并禁用服务
+# Остановка и отключение службы
 sudo systemctl stop ntripcaster
 sudo systemctl disable ntripcaster
 
-# 删除服务文件
+# Удаление файла службы
 sudo rm /etc/systemd/system/ntripcaster.service
 sudo systemctl daemon-reload
 
-# 删除应用文件
+# Удаление файлов приложения
 sudo rm -rf /opt/ntripcaster
 sudo rm -rf /etc/ntripcaster
 sudo rm -rf /var/log/ntripcaster
 
-# 删除用户
+# Удаление пользователя
 sudo userdel ntripcaster
 
-# 删除 Nginx 配置（如果配置了）
+# Удаление конфигурации Nginx (если была настроена)
 sudo rm /etc/nginx/sites-enabled/ntripcaster
 sudo rm /etc/nginx/sites-available/ntripcaster
 sudo systemctl restart nginx
 
-# 删除防火墙规则
+# Удаление правил файрвола
 sudo ufw delete allow 2101/tcp
 sudo ufw delete allow 5757/tcp
 ```
 
-## 技术支持
+## Техническая поддержка
 
-如果您在安装或使用过程中遇到问题，可以：
+Если при установке или использовании возникли проблемы, можно:
 
-1. **查看日志**: `sudo journalctl -u ntripcaster -f`
-2. **检查状态**: `sudo systemctl status ntripcaster`
-3. **查看文档**: [GitHub Repository](https://github.com/Rampump/NTRIPcaster)
-4. **提交问题**: [GitHub Issues](https://github.com/Rampump/NTRIPcaster/issues)
-5. **联系作者**: i@jia.by
-6. **访问官网**: https://2rtk.com
+1. **Просмотр логов**: `sudo journalctl -u ntripcaster -f`
+2. **Проверка статуса**: `sudo systemctl status ntripcaster`
+3. **Просмотр документации**: [Репозиторий GitHub](https://github.com/srgizh/NTRIPcaster)
+4. **Сообщить о проблеме**: [Проблемы GitHub](https://github.com/srgizh/NTRIPcaster/issues)
+5. **Связаться с автором**: i@jia.by
+6. **Посетить официальный сайт**: https://2rtk.com
 
-## 更新日志
+## История обновлений
 
-- **v2.2.0**: 最新版本，支持更多 Linux 发行版
-- **v2.1.8**: 性能优化和安全增强
-- **v2.1.7**: 添加监控和日志功能
+- **v2.2.0**: Последняя версия, поддержка большего количества дистрибутивов Linux
+- **v2.1.8**: Оптимизация производительности и улучшение безопасности
+- **v2.1.7**: Добавление функций мониторинга и логирования
 
 ---
 
-**版本信息：** NTRIP Caster v2.2.0  
-**更新时间：** 2024年12月  
-**作者：** 2RTK Team  
-**许可证：** Apache 2.0
+**Информация о версии:** NTRIP Caster v2.2.0  
+**Дата обновления:** Декабрь 2024  
+**Автор:** Команда 2RTK  
+**Лицензия:** Apache 2.0

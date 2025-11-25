@@ -43,7 +43,7 @@ class AntiSpamLogger:
         """Проверить, следует ли записывать лог"""
         with self.lock:
             now = time.time()
-           
+
             self.message_counts[message_key] = [
                 timestamp for timestamp in self.message_counts[message_key]
                 if now - timestamp < self.time_window
@@ -115,7 +115,7 @@ class NTRIPHandler:
                     else:
                         logger.log_debug(f"TCP Keep-Alive настроен: idle={config.TCP_KEEPALIVE['idle']}s", 'ntrip')
             except OSError:
-               
+
                 logger.log_debug("TCP Keep-Alive включен (используются системные параметры по умолчанию)", 'ntrip')
         except Exception as e:
             logger.log_debug(f"Настройка Keep-Alive не удалась: {e}", 'ntrip')
@@ -125,7 +125,7 @@ class NTRIPHandler:
         try:
             # Изменено на уровень debug, чтобы избежать частых логов
             log_debug(f"=== Начало обработки запроса {self.client_address} ===")
-           
+
             request_data = self.client_socket.recv(BUFFER_SIZE).decode('utf-8', errors='ignore')
             if not request_data:
                 log_debug(f"Клиент {self.client_address} отправил пустой запрос")
@@ -145,7 +145,7 @@ class NTRIPHandler:
             request_line = lines[0]
             try:
                 method, path, protocol = self._parse_request_line(request_line)
-               
+
                 self.current_method = method.upper()
             except ValueError as e:
                 log_debug(f"Не удалось распарсить строку запроса {self.client_address}: {e}")
@@ -208,7 +208,7 @@ class NTRIPHandler:
         except Exception as e:
             log_error(f"Исключение при обработке запроса {self.client_address}: {e}", exc_info=True)
             self.send_error_response(500, "Internal Server Error")
-           
+
             self._cleanup()
     
     def _parse_request_line(self, request_line):
@@ -359,7 +359,7 @@ class NTRIPHandler:
             # Обработка SOURCE и ADMIN запросов
             parts = request_line.split()
             if len(parts) >= 2:
-               
+
                 second_param = parts[1] if len(parts) == 2 else parts[2] if len(parts) >= 3 else ""
                 if (second_param.startswith(('http://', 'https://', 'rtsp://')) or 
                     (len(parts) == 2 and (second_param.startswith('/') or not second_param.startswith('http')))):

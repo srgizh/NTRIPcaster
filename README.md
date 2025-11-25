@@ -1,247 +1,273 @@
 # 2RTK NTRIP Caster v2.2.0
 
-**Language / 语言选择:**
-- [English](#) (Current)
-- [中文版](README-zh.md)
+**Language / Выбор языка:**
+- [English](README-en.md)
+- [中文版 / Chinese](README-zh.md)
+- [Русский](#) (Текущий)
 
 ---
 
-This is a simple NTRIP caster written in Python that supports NTRIP v1.0 and v2.0 protocols, managed through a web interface.
-You can use the web interface to add users and mount points in your browser, and also view the NTRIP caster connection information.
-It supports high concurrent connections and can handle 2000+ concurrent connections. (Due to my limited testing environment, I only tested with 2 RTCM data sources and 2000 concurrent user downloads, but its performance is excellent)
+Это простой NTRIP caster, написанный на Python, поддерживающий протоколы NTRIP v1.0 и v2.0, управляемый через веб-интерфейс.
+Вы можете использовать веб-интерфейс для добавления пользователей и точек монтирования в браузере, а также для просмотра информации о подключениях NTRIP caster.
+Он поддерживает высокую одновременную нагрузку и может обрабатывать 2000+ одновременных подключений. (Из-за ограничений моей тестовой среды я тестировал только с 2 источниками RTCM данных. 2000 одновременных загрузок данных пользователями, но его производительность отличная)
 
-It used to be a single file 2rtk.py,https://github.com/Rampump/2RTKcaster   . but I recently refactored it. Now it looks much fatter, but I still think it's relatively lightweight. lol
+Раньше это был один файл 2rtk.py, но я недавно переработал его. Теперь он выглядит намного больше, но я всё ещё считаю его относительно лёгким. lol
 
-- Web-based management. So you can deploy it on any cloud host.
-- Uses SQLite database to store user information and mount point information.
-- Leverages the pyrtcm library to parse uploaded data and correct STR tables (this part of the code has been rewritten several times, but I'm still not satisfied with it, including the current version. Looking forward to future updates).
-    (You just need to add a mount point on the web page and upload RTCM data, 2rtk-NtripCaster will automatically generate STR information and parse RTCM data to extract data types and location information to correct the STR)
-- This NTRIP caster is still far from the caster in my mind. I will gradually improve it in my spare time.
-- It supports most systems with Python environment, including debian, ubuntu, centos, armbian, etc.
-- Supports Docker deployment.
+- Веб-управление. Так что вы можете развернуть его на любом облачном хосте.
+- Использует базу данных SQLite для хранения информации о пользователях и точках монтирования.
+- Использует библиотеку pyrtcm для парсинга загруженных данных и исправления таблиц STR (эта часть кода переписывалась несколько раз. Но я всё ещё недоволен ею, включая текущую версию. Ожидайте последующих обновлений).
+    (Вам просто нужно добавить точку монтирования на веб-странице и загрузить данные RTCM, 2rtk-NtripCaster автоматически сгенерирует информацию STR и распарсит данные RTCM для извлечения типов данных и информации о местоположении для исправления STR)
+- Этот NTRIP caster всё ещё далёк от caster в моём представлении. Я буду постепенно улучшать его в свободное время.
+- Он поддерживает большинство систем с окружением Python, включая debian, ubuntu, centos, armbian и т.д.
+- Поддерживает развёртывание через Docker.
 
-## Installation Tutorials
+## Туториалы по установке
 
-### Docker Deployment (Recommended)
-Recommended one-click deployment, no manual configuration required.
+### Развёртывание через Docker (Рекомендуется)
+Рекомендуется одноразовое развёртывание, ручная настройка не требуется.
 ```bash
-# Pull and run directly, the image will automatically create required directories and configuration files
+# Загрузить и запустить напрямую, образ автоматически создаст необходимые каталоги и конфигурационные файлы
 docker run -d \
   --name ntrip-caster \
   -p 2101:2101 \
   -p 5757:5757 \
   2rtk/ntripcaster:latest
 ```
-- **中文教程**: [Docker 安装和使用教程](DOCKER-TUTORIAL.md)
+- **Русский туториал**: [Руководство по установке и использованию Docker](DOCKER-TUTORIAL.md)
+- **中文教程 / Chinese Tutorial**: [Docker 安装和使用教程](DOCKER-TUTORIAL.md)
 - **English Tutorial**: [Docker Installation and Usage Guide](DOCKER-TUTORIAL-EN.md)
 
-### Debian System Native Installation
-- **中文教程**: [Linux 系统原生安装教程](INSTALL-TUTORIAL.md)
+### Нативная установка в Debian
+- **Русский туториал**: [Руководство по установке в Linux](INSTALL-TUTORIAL.md)
+- **中文教程 / Chinese Tutorial**: [Linux 系统原生安装教程](INSTALL-TUTORIAL.md)
 - **English Tutorial**: [Linux Native Installation Guide](INSTALL-TUTORIAL-EN.md)
 
-**Access URLs**:
-- Web Management Interface: `http://yourserverip:5757`
-- NTRIP Service: `ntrip://yourserverip:2101`
-- Default Account: `admin` / `admin123` (Remember to change the default password)
+**Адреса доступа**:
+-  Веб-интерфейс управления: `http://yourserverip:5757`
+-  Служба NTRIP: `ntrip://yourserverip:2101`
+-  Учётная запись по умолчанию: `admin` / `admin123` (не забудьте изменить пароль по умолчанию)
 
-## Hardware Recommendations
+## Рекомендации по оборудованию
 
-### Minimum Configuration Requirements
-- **CPU**: 2 cores (x86_64 architecture recommended)
-- **Memory**: 2GB RAM
-- **Storage**: 10GB available disk space
-- **Network**: Stable network connection
-- **Operating System**: Ubuntu 18.04+ / Debian 10+ / CentOS 7+
+### Минимальные требования к конфигурации
+- **CPU**: 2 ядра (рекомендуется архитектура x86_64)
+- **Память**: 2GB RAM
+- **Хранилище**: 10GB доступного дискового пространства
+- **Сеть**: стабильное сетевое соединение
+- **Операционная система**: Ubuntu 18.04+ / Debian 10+ / CentOS 7+
 
-## Frontend Web Interface Features
-### Homepage
-You can see the current caster's running status on the homepage, including connection count, user count, mount point count, etc. The log information below will push user or mount point connection status in real-time. DEBUG mode will push more debugging information.
+## Функции веб-интерфейса
 
-![Homepage](img/Home.png)
+### Главная страница
+Вы можете видеть текущее состояние работы caster на главной странице, включая количество подключений, количество пользователей, количество точек монтирования и т.д. Информация в логах ниже будет отправлять в реальном времени состояние подключений пользователей или точек монтирования. Режим DEBUG будет отправлять больше отладочной информации.
 
-### User Management Page
-You can add users, delete users, modify user passwords, etc. on the user management page. You can also see online users. (User management will be added later, API is reserved)
+![Главная страница](img/Home.png)
 
-![User Management](img/user.png)
+### Страница управления пользователями
+Вы можете добавлять пользователей, удалять пользователей, изменять пароли пользователей и т.д. на странице управления пользователями. Также можно видеть пользователей в сети. (Позже будет добавлено управление пользователями, API зарезервирован)
 
-### Mount Point Management Page
-You can add mount points, delete mount points, modify mount point information, etc. on the mount point management page. You can also see online information. (Mount point management will be added later, API is reserved)
+![Управление пользователями](img/user.png)
 
-![Mount Point Management](img/mount.png)
+### Страница управления точками монтирования
+Вы можете добавлять точки монтирования, удалять точки монтирования, изменять информацию о точках монтирования и т.д. на странице управления точками монтирования. Также можно видеть информацию в сети. (Позже будет добавлено управление точками монтирования, API зарезервирован)
 
-### Base Station Information Page
-You can view RTCM status on the base station information page. Click the INFO button in front of the STR entry, and the backend will parse it and display it in the information below. (This usually takes some time to parse before updating the display)
+![Управление точками монтирования](img/mount.png)
 
-![Base Station Information](img/rtcm.png)
+### Страница информации о базовой станции
+Вы можете просматривать состояние RTCM на странице информации о базовой станции. Нажмите кнопку INFO перед записью STR, и серверная часть выполнит парсинг и отобразит это в информации ниже. (Обычно требуется некоторое время на парсинг, прежде чем обновится отображение)
 
-### Configuration Recommendations for Different Loads
+![Информация о базовой станции](img/rtcm.png)
 
-| Concurrent Connections | CPU | Memory | Storage | Network Bandwidth |
-|------------------------|-----|--------|---------|------------------|
-| **< 100** | 1 core | 1GB | 5GB | 10Mbps |
-| **100-500** | 2 cores | 2GB | 10GB | 50Mbps |
-| **500-1000** | 4 cores | 4GB | 20GB | 100Mbps |
-| **1000-2000** | 8 cores | 8GB | 50GB | 200Mbps |
-| **2000+** | 16+ cores | 16GB+ | 100GB+ | 500Mbps+ |
+### Рекомендации по конфигурации для различных нагрузок
 
-### Cloud Server Recommendations
-For cloud server deployment, please open ports 5757 and 2101 in security settings
+| Количество одновременных подключений | CPU | Память | Хранилище | Сетевая пропускная способность |
+|-----------|-----|------|------|----------|
+| **< 100** | 1 ядро | 1GB | 5GB | 10Mbps |
+| **100-500** | 2 ядра | 2GB | 10GB | 50Mbps |
+| **500-1000** | 4 ядра | 4GB | 20GB | 100Mbps |
+| **1000-2000** | 8 ядер | 8GB | 50GB | 200Mbps |
+| **2000+** | 16 ядер+ | 16GB+ | 100GB+ | 500Mbps+ |
+
+### Рекомендации по облачным серверам
+При развёртывании на облачном сервере откройте порты 5757 и 2101 в настройках безопасности
 #### AWS EC2
-- **Entry Level**: t3.small (2 cores 2GB)
-- **Standard**: c5.large (2 cores 4GB)
-- **High Performance**: c5.2xlarge (8 cores 16GB)
+- **Начальный уровень**: t3.small (2 ядра 2GB)
+- **Стандартный**: c5.large (2 ядра 4GB)
+- **Высокая производительность**: c5.2xlarge (8 ядер 16GB)
 
-## Performance Benchmark Tests
+## Тесты производительности
 
-- **500 Connection Test**: CPU 18.1%, Memory 29.5%, Network 7.47 Mbps
-- **1000 Connection Test**: CPU 19.1%, Memory 33.9%, Network 10.79 Mbps
-- **2000 Connection Limit Test**: CPU 17.3%, Memory 30.3%, Network 7.69 Mbps
+- **Тест 500 подключений**: CPU 18.1%, память 29.5%, сеть 7.47 Mbps
+- **Тест 1000 подключений**: CPU 19.1%, память 33.9%, сеть 10.79 Mbps  
+- **Предельный тест 2000 подключений**: CPU 17.3%, память 30.3%, сеть 7.69 Mbps
 
-> For detailed test reports, please check the [tests/](tests/) directory
+> Подробные отчёты о тестировании см. в каталоге [tests/](tests/)
 
-## Configuration Guide
+## Руководство по конфигурации
 
-### Main Configuration Options
+### Основные параметры конфигурации
 
 ```ini
 [ntrip]
-port = 2101                    # NTRIP service port
-max_connections = 5000         # Maximum connections
+port = 2101                    # Порт службы NTRIP
+max_connections = 5000         # Максимальное количество подключений
 
 [web] 
-port = 5757                    # Web management port
-refresh_interval = 10          # Data refresh interval
+port = 5757                    # Порт веб-управления
+refresh_interval = 10          # Интервал обновления данных
 
 [performance]
-thread_pool_size = 5000        # Concurrent connection thread pool size
-max_workers = 5000             # Maximum worker threads
-ring_buffer_size = 60          # Ring buffer size
+thread_pool_size = 5000        # Размер пула потоков для одновременных подключений
+max_workers = 5000             # Максимальное количество рабочих потоков
+ring_buffer_size = 60          # Размер кольцевого буфера
 
 [security]
-secret_key = your-secret-key   # Please change the default key in production
-```
+secret_key = your-secret-key   # В production-среде измените ключ по умолчанию
 
-```ini
 [admin]
-username = admin               # Administrator username
-password = admin123            # Administrator password (change in production)
+username = admin               # Имя пользователя администратора
+password = admin123            # Пароль администратора (в production-среде измените)
 ```
 
-### Common Issue Diagnosis
+### Диагностика распространённых проблем
 
-#### Port Occupation Issues
+#### Проблемы с занятостью портов
 ```bash
-# Check port occupation
-sudo netstat -tlnp | grep :2101    # NTRIP port
-sudo netstat -tlnp | grep :5757    # Web management port
-sudo lsof -i :2101                 # Check port usage
+# Проверка занятости портов
+sudo netstat -tlnp | grep :2101    # Порт NTRIP
+sudo netstat -tlnp | grep :5757    # Порт веб-управления
+sudo lsof -i :2101                 # Просмотр использования порта
 
-# Release port
-sudo kill -9 <PID>                 # Force terminate process
-sudo fuser -k 2101/tcp             # Force release port
+# Освобождение порта
+sudo kill -9 <PID>                 # Принудительное завершение процесса
+sudo fuser -k 2101/tcp             # Принудительное освобождение порта
 ```
 
-#### Network Connection Issues
+#### Проблемы с сетевым подключением
 ```bash
-# Firewall check
-sudo ufw status                    # Ubuntu firewall
-sudo firewall-cmd --list-all       # CentOS firewall
+# Проверка файрвола
+sudo ufw status                    # Файрвол Ubuntu
+sudo firewall-cmd --list-all       # Файрвол CentOS
 
-# Open ports
-sudo ufw allow 2101/tcp            # NTRIP port
-sudo ufw allow 5757/tcp            # Web management port
+# Открытие портов
+sudo ufw allow 2101/tcp            # Порт NTRIP
+sudo ufw allow 5757/tcp            # Порт веб-управления
 
-# Network connectivity test
-telnet localhost 2101              # Test NTRIP port
-curl http://localhost:5757/        # Test Web port
+# Тестирование сетевой связности
+telnet localhost 2101              # Тест порта NTRIP
+curl http://localhost:5757/        # Тест веб-порта
 ```
 
-### Performance Optimization
+#### Служба не запускается
+```bash
+# Проверка статуса службы
+sudo systemctl status 2rtk
 
-#### High Concurrency Configuration
+# Просмотр подробных логов
+sudo journalctl -u 2rtk -f
+
+# Проверка конфигурационного файла
+python3 -c "import configparser; c=configparser.ConfigParser(); c.read('config.ini'); print('Синтаксис конфигурационного файла корректен')"
+
+# Проверка прав доступа к порту
+sudo netstat -tlnp | grep :2101
+```
+
+#### Проблемы с базой данных
+```bash
+# Проверка прав доступа к файлу базы данных
+ls -la data/2rtk.db
+
+# Пересоздание базы данных (действуйте осторожно)
+rm data/2rtk.db
+python3 main.py  # Автоматически создаст новую базу данных
+```
+
+#### Слишком высокое использование памяти
+```bash
+# Мониторинг использования памяти
+top -p $(pgrep -f "python.*main.py")
+
+# Настройка конфигурации для снижения использования памяти
+# В config.ini уменьшите следующие параметры:
+# max_connections = 1000
+# thread_pool_size = 1000
+# ring_buffer_size = 30
+```
+
+### Оптимизация производительности
+
+#### Конфигурация высокой одновременной нагрузки
 ```ini
-# config.ini optimization configuration
+# Оптимизированная конфигурация config.ini
 [ntrip]
-max_connections = 10000            # Maximum connections
+max_connections = 10000            # Максимальное количество подключений
 port = 2101
 
 [performance]
-thread_pool_size = 10000           # Thread pool size
-max_workers = 10000                # Maximum worker threads
-ring_buffer_size = 60              # Ring buffer
+thread_pool_size = 10000           # Размер пула потоков
+max_workers = 10000                # Максимальное количество рабочих потоков
+ring_buffer_size = 60              # Кольцевой буфер
 
 [network]
-buffer_size = 16384                # Network buffer
-timeout = 30                       # Connection timeout
+buffer_size = 16384                # Сетевой буфер
+timeout = 30                       # Таймаут подключения
 ```
 
-#### System-level Optimization
-```bash
-# Increase file descriptor limit
-echo "* soft nofile 65536" >> /etc/security/limits.conf
-echo "* hard nofile 65536" >> /etc/security/limits.conf
+### Мониторинг и логирование
 
-# Network parameter optimization
-echo "net.core.somaxconn = 65536" >> /etc/sysctl.conf
-echo "net.ipv4.tcp_max_syn_backlog = 65536" >> /etc/sysctl.conf
-sudo sysctl -p
-```
-
-### Monitoring and Logging
-
-#### Log Level Configuration
+#### Конфигурация уровня логирования
 ```ini
-# config.ini log configuration
+# Конфигурация логирования config.ini
 [logging]
 level = INFO                       # DEBUG, INFO, WARNING, ERROR
 format = json                      # json, text
-rotate_size = 100MB               # Log rotation size
-rotate_count = 10                 # Number of log files to keep
+rotate_size = 100MB               # Размер ротации логов
+rotate_count = 10                 # Количество сохраняемых файлов логов
 ```
-## Contributing
 
-- Welcome to submit Pull Requests
-- Contact: i@jia.by
-- 2rtk.com
+## Вклад в проект
 
+- Приветствуется отправка Pull Request
+- Контакты: i@jia.by
 
-## Acknowledgments and Open Source Libraries
+## Благодарности и открытые библиотеки
 
-This project uses the following excellent open source libraries and tools, and we express our sincere gratitude:
+Этот проект использует следующие отличные открытые библиотеки и инструменты, мы выражаем искреннюю благодарность:
 
-### Core Dependencies
+### Основные зависимости
 
-| Library | Version | Purpose | License |
-|---------|---------|---------|----------|
-| **Flask** | 2.3.3 | Web framework, providing HTTP services and APIs | BSD-3-Clause |
-| **Flask-SocketIO** | 5.3.6 | WebSocket real-time communication support | MIT |
-| **python-socketio** | 5.8.0 | Socket.IO protocol implementation | MIT |
-| **psutil** | 5.9.5 | System performance monitoring and resource statistics | BSD-3-Clause |
-| **pyproj** | 3.6.1 | Geographic coordinate system conversion and projection calculation | MIT |
+| Библиотека | Версия | Назначение | Лицензия |
+|----|------|------|--------|
+| **Flask** | 2.3.3 | Веб-фреймворк, предоставляет HTTP-службы и API | BSD-3-Clause |
+| **Flask-SocketIO** | 5.3.6 | Поддержка WebSocket для связи в реальном времени | MIT |
+| **python-socketio** | 5.8.0 | Реализация протокола Socket.IO | MIT |
+| **psutil** | 5.9.5 | Мониторинг производительности системы и статистика ресурсов | BSD-3-Clause |
+| **pyproj** | 3.6.1 | Преобразование геодезических систем координат и вычисление проекций | MIT |
 
-### RTCM Parsing Library
+### Библиотека парсинга RTCM
 
-**pyrtcm** - Core RTCM message parsing library
-- **Source**: Integrated based on standard [pyrtcm](https://github.com/semuconsulting/pyrtcm) library source code
-- **Version**: Integrated version (to prevent upstream repository deletion risk)
-- **Author**: semuconsulting
-- **License**: BSD-3-Clause
-- **Purpose**: Provides complete RTCM 3.x message parsing, encoding and decoding functions
-- **Note**: To ensure project stability, it is recommended to directly integrate the pyrtcm library source code into the project to avoid external dependency risks
+**pyrtcm** - Основная библиотека парсинга сообщений RTCM
+- **Источник**: Интегрирована на основе исходного кода стандартной библиотеки [pyrtcm](https://github.com/semuconsulting/pyrtcm)
+- **Версия**: Интегрированная версия (для предотвращения риска удаления репозитория источника)
+- **Автор**: semuconsulting
+- **Лицензия**: BSD-3-Clause
+- **Назначение**: Предоставляет полный функционал парсинга, кодирования и декодирования сообщений RTCM 3.x
+- **Примечание**: Для обеспечения стабильности проекта рекомендуется напрямую интегрировать исходный код библиотеки pyrtcm в проект, чтобы избежать рисков внешних зависимостей
 
-## Open Source License
+## Открытая лицензия
 
-This project is licensed under the [Apache License 2.0](LICENSE).
+Этот проект лицензирован под лицензией [Apache License 2.0](LICENSE).
 
-### Third-party Library Licenses
+### Лицензии сторонних библиотек
 
-- **pyrtcm**: BSD-3-Clause License
-- **Flask series**: MIT/BSD License
-- **psutil**: BSD-3-Clause License
-- **pyproj**: MIT License
+- **pyrtcm**: Лицензия BSD-3-Clause
+- **Серия Flask**: Лицензия MIT/BSD  
+- **psutil**: Лицензия BSD-3-Clause
+- **pyproj**: Лицензия MIT
 
-All integrated third-party libraries maintain their original open source licenses. Please comply with the corresponding license terms when using.
+Все интегрированные сторонние библиотеки сохраняют свои первоначальные открытые лицензии. При использовании соблюдайте соответствующие условия лицензий.
 
 ---
 
-** If this project helps you, please give me a Star!**
+**Если этот проект помог вам, пожалуйста, поставьте Star!**

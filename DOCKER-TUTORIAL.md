@@ -1,73 +1,73 @@
-# NTRIP Caster Docker 安装和使用教程
+# Руководство по установке и использованию NTRIP Caster в Docker
 
-本教程将指导您如何使用 Docker 快速部署和运行 NTRIP Caster v2.2.0。
+Данное руководство поможет вам быстро развернуть и запустить NTRIP Caster v2.2.0 с помощью Docker.
 
-## 目录
-- [前置要求](#前置要求)
-- [快速开始](#快速开始)
-- [详细安装步骤](#详细安装步骤)
-- [配置说明](#配置说明)
-- [使用方法](#使用方法)
-- [常见问题](#常见问题)
-- [高级配置](#高级配置)
+## Содержание
+- [Предварительные требования](#предварительные-требования)
+- [Быстрый старт](#быстрый-старт)
+- [Подробные шаги установки](#подробные-шаги-установки)
+- [Описание конфигурации](#описание-конфигурации)
+- [Способы использования](#способы-использования)
+- [Часто задаваемые вопросы](#часто-задаваемые-вопросы)
+- [Расширенная конфигурация](#расширенная-конфигурация)
 
-## 前置要求
+## Предварительные требования
 
-### 1. 安装 Docker
+### 1. Установка Docker
 
-#### Windows 系统
-1. 下载并安装 [Docker Desktop for Windows](https://www.docker.com/products/docker-desktop/)
-2. 启动 Docker Desktop
-3. 验证安装：
+#### Система Windows
+1. Скачать и установить [Docker Desktop for Windows](https://www.docker.com/products/docker-desktop/)
+2. Запустить Docker Desktop
+3. Проверить установку:
    ```cmd
    docker --version
    docker-compose --version
    ```
 
-#### Linux 系统 (Ubuntu/Debian)
+#### Система Linux (Ubuntu/Debian)
 ```bash
-# 更新包索引
+# Обновление индекса пакетов
 sudo apt update
 
-# 安装必要的包
+# Установка необходимых пакетов
 sudo apt install apt-transport-https ca-certificates curl gnupg lsb-release
 
-# 添加 Docker 官方 GPG 密钥
+# Добавление официального GPG-ключа Docker
 curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
 
-# 添加 Docker 仓库
+# Добавление репозитория Docker
 echo "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
 
-# 安装 Docker Engine
+# Установка Docker Engine
 sudo apt update
 sudo apt install docker-ce docker-ce-cli containerd.io docker-compose-plugin
 
-# 启动 Docker 服务
+# Запуск службы Docker
 sudo systemctl start docker
 sudo systemctl enable docker
 
-# 将当前用户添加到 docker 组（可选）
+# Добавление текущего пользователя в группу docker (опционально)
 sudo usermod -aG docker $USER
 ```
 
-#### CentOS/RHEL 系统
+#### Система CentOS/RHEL
 ```bash
-# 安装 Docker
+# Установка Docker
 sudo yum install -y yum-utils
 sudo yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
 sudo yum install docker-ce docker-ce-cli containerd.io docker-compose-plugin
 
-# 启动 Docker 服务
+# Запуск службы Docker
 sudo systemctl start docker
 sudo systemctl enable docker
 ```
 
-## 快速开始
+## Быстрый старт
 
-### 方法一：一键启动（最简单）
+### Способ 1: Одноразовый запуск (самый простой)
 
 ```bash
-# 拉取并直接运行，镜像会自动创建所需目录和配置文件
+# Загрузка и прямой запуск, образ автоматически создаст необходимые каталоги и конфигурационные файлы
 docker run -d \
   --name ntrip-caster \
   -p 2101:2101 \
@@ -75,25 +75,25 @@ docker run -d \
   2rtk/ntripcaster:latest
 ```
 
-> **说明：** 镜像内置了启动脚本，会自动创建必要的目录（logs、data、config）并初始化默认配置文件。数据将存储在容器内部，只要不删除容器，数据就会持久化保存。适合快速测试、体验和轻量级部署。
+> **Примечание:** Образ содержит встроенный скрипт запуска, который автоматически создаст необходимые каталоги (logs, data, config) и инициализирует конфигурационный файл по умолчанию. Данные будут храниться внутри контейнера, и пока контейнер не будет удален, данные будут сохранены. Подходит для быстрого тестирования, проверки и легкого развертывания.
 >
-> **数据持久化：** 只要容器不被删除（`docker rm`），所有数据（日志、数据库、配置）都会保留。重启容器（`docker restart ntrip-caster`）不会丢失数据。
+> **Сохранение данных:** Пока контейнер не удален (`docker rm`), все данные (логи, база данных, конфигурация) будут сохранены. Перезапуск контейнера (`docker restart ntrip-caster`) не приведет к потере данных.
 
-### 方法二：持久化数据存储（推荐生产环境）
+### Способ 2: Сохранение данных на хосте (рекомендуется для production)
 
-> **适用场景：** 数据存储在宿主机目录中，便于服务器迁移、版本升级、数据备份和配置管理。特别适合需要频繁维护或多环境部署的场景。
+> **Сценарий использования:** Данные хранятся в каталоге хоста, что облегчает миграцию сервера, обновление версий, резервное копирование данных и управление конфигурацией. Особенно подходит для сценариев, требующих частого обслуживания или развертывания в нескольких средах.
 
 ```bash
-# 1. 拉取最新镜像
+# 1. Загрузка последнего образа
 docker pull 2rtk/ntripcaster:latest
 
-# 2. 创建数据目录
+# 2. Создание каталога данных
 mkdir -p ./ntrip-data/{logs,data,config}
 
-# 3. 复制配置文件模板
+# 3. Копирование шаблона конфигурационного файла
 docker run --rm 2rtk/ntripcaster:latest cat /app/config.ini.example > ./ntrip-data/config/config.ini
 
-# 4. 运行容器
+# 4. Запуск контейнера
 docker run -d \
   --name ntrip-caster \
   -p 2101:2101 \
@@ -104,45 +104,45 @@ docker run -d \
   2rtk/ntripcaster:latest
 ```
 
-### 方法三：使用 Docker Compose（推荐生产环境）
+### Способ 3: Использование Docker Compose (рекомендуется для production)
 
-1. 下载项目文件：
+1. Загрузка файлов проекта:
 ```bash
-git clone https://github.com/Rampump/NTRIPcaster.git
+git clone https://github.com/srgizh/NTRIPcaster.git
 cd NTRIPcaster
 ```
 
-2. 启动服务：
+2. Запуск службы:
 ```bash
-# 开发环境
+# Среда разработки
 docker-compose up -d
 
-# 生产环境
+# Production-среда
 docker-compose -f docker-compose.prod.yml up -d
 ```
 
-## 详细安装步骤
+## Подробные шаги установки
 
-### 1. 准备工作目录
+### 1. Подготовка рабочего каталога
 
 ```bash
-# 创建项目目录
+# Создание каталога проекта
 mkdir ntrip-caster && cd ntrip-caster
 
-# 创建数据目录结构
+# Создание структуры каталогов данных
 mkdir -p data/{logs,data,config}
 ```
 
-### 2. 准备配置文件
+### 2. Подготовка конфигурационного файла
 
 ```bash
-# 获取配置文件模板
+# Получение шаблона конфигурационного файла
 docker run --rm 2rtk/ntripcaster:latest cat /app/config.ini.example > data/config/config.ini
 ```
 
-### 3. 编辑配置文件
+### 3. Редактирование конфигурационного файла
 
-编辑 `data/config/config.ini` 文件，主要配置项：
+Редактирование файла `data/config/config.ini`, основные параметры конфигурации:
 
 ```ini
 
@@ -159,13 +159,13 @@ log_dir = logs
 log_level = INFO
 
 [security]
-secret_key = your-secret-key-here   #生产环境必须修改默认的key
+secret_key = your-secret-key-here   # В production-среде обязательно изменить ключ по умолчанию
 password_hash_rounds = 12
 ```
 
-### 4. 启动容器
+### 4. Запуск контейнера
 
-#### 基础启动
+#### Базовый запуск
 ```bash
 docker run -d \
   --name ntrip-caster \
@@ -178,7 +178,7 @@ docker run -d \
   2rtk/ntripcaster:latest
 ```
 
-#### 带环境变量的启动
+#### Запуск с переменными окружения
 ```bash
 docker run -d \
   --name ntrip-caster \
@@ -194,134 +194,134 @@ docker run -d \
   2rtk/ntripcaster:latest
 ```
 
-## 配置说明
+## Описание конфигурации
 
-### 端口说明
-- **2101**: NTRIP 服务端口（标准 NTRIP 端口）
-- **5757**: Web 管理界面端口
+### Описание портов
+- **2101**: Порт службы NTRIP (стандартный порт NTRIP)
+- **5757**: Порт веб-интерфейса управления
 
-### 数据卷说明
-- `/app/logs`: 日志文件目录
-- `/app/data`: 数据库和数据文件目录
-- `/app/config`: 配置文件目录
+### Описание томов данных
+- `/app/logs`: Каталог файлов логов
+- `/app/data`: Каталог базы данных и файлов данных
+- `/app/config`: Каталог конфигурационных файлов
 
-### 环境变量
-- `NTRIP_PORT`: NTRIP 服务端口（默认：2101）
-- `WEB_PORT`: Web 服务端口（默认：5757）
-- `DEBUG_MODE`: 调试模式（默认：false）
-- `DATABASE_PATH`: 数据库路径（默认：data/2rtk.db）
-- `SECRET_KEY`: 应用密钥
+### Переменные окружения
+- `NTRIP_PORT`: Порт службы NTRIP (по умолчанию: 2101)
+- `WEB_PORT`: Порт веб-службы (по умолчанию: 5757)
+- `DEBUG_MODE`: Режим отладки (по умолчанию: false)
+- `DATABASE_PATH`: Путь к базе данных (по умолчанию: data/2rtk.db)
+- `SECRET_KEY`: Ключ приложения
 
-## 使用方法
+## Способы использования
 
-### 1. 访问 Web 管理界面
+### 1. Доступ к веб-интерфейсу управления
 
-打开浏览器访问：`http://localhost:5757`
+Открыть браузер и перейти по адресу: `http://localhost:5757`
 
-默认管理员账户：
-- 用户名：`admin`
-- 密码：`admin123`
+Учетные данные администратора по умолчанию:
+- Имя пользователя: `admin`
+- Пароль: `admin123`
 
-### 2. 添加挂载点
+### 2. Добавление точки монтирования
 
-在 Web 界面中：
-1. 登录管理界面
-2. 点击"添加挂载点"
-3. 填写挂载点信息：
-   - 挂载点名称：如 `RTCM3`
-   - 描述：挂载点描述
-   - 格式：选择数据格式
+В веб-интерфейсе:
+1. Войти в интерфейс управления
+2. Нажать "Добавить точку монтирования"
+3. Заполнить информацию о точке монтирования:
+   - Имя точки монтирования: например, `RTCM3`
+   - Описание: описание точки монтирования
+   - Формат: выбрать формат данных
 
-### 3. 连接 NTRIP 客户端
+### 3. Подключение NTRIP-клиента
 
-使用 NTRIP 客户端连接：
-- 服务器：`your-server-ip`
-- 端口：`2101`
-- 挂载点：您创建的挂载点名称
-- 用户名/密码：在管理界面中设置
+Использование NTRIP-клиента для подключения:
+- Сервер: `your-server-ip`
+- Порт: `2101`
+- Точка монтирования: имя созданной точки монтирования
+- Имя пользователя/пароль: настраиваются в интерфейсе управления
 
-### 4. 查看日志
+### 4. Просмотр логов
 
 ```bash
-# 查看容器日志
+# Просмотр логов контейнера
 docker logs ntrip-caster
 
-# 实时查看日志
+# Просмотр логов в реальном времени
 docker logs -f ntrip-caster
 
-# 查看应用日志文件
+# Просмотр файла логов приложения
 tail -f data/logs/main.log
 ```
 
-## 常见问题
+## Часто задаваемые вопросы
 
-### Q1: 容器启动失败 - 权限错误
+### Q1: Ошибка запуска контейнера - проблема с правами доступа
 
-**问题描述：**
-如果遇到 `PermissionError: [Errno 13] Permission denied: '/app/logs/main.log'` 错误，这是由于Docker卷权限问题导致的。
+**Описание проблемы:**
+При ошибке `PermissionError: [Errno 13] Permission denied: '/app/logs/main.log'` причина - проблема с правами доступа к томам Docker.
 
-**解决方案：**
+**Решение:**
 ```bash
-# 1. 停止并删除现有容器
+# 1. Остановка и удаление существующего контейнера
 docker-compose down
 docker rm ntrip-caster
 
-# 2. 删除现有的数据卷（注意：这会清除所有数据）
+# 2. Удаление существующих томов данных (внимание: это удалит все данные)
 docker volume rm ntripcaster_ntrip-logs ntripcaster_ntrip-data ntripcaster_ntrip-config
 
-# 3. 重新构建镜像（如果使用最新版本）
+# 3. Пересборка образа (если используется последняя версия)
 docker-compose build --no-cache
 
-# 4. 重新启动服务
+# 4. Перезапуск службы
 docker-compose up -d
 ```
 
-**其他启动问题检查：**
+**Проверка других проблем запуска:**
 ```bash
-# 检查容器状态
+# Проверка статуса контейнера
 docker ps -a
 
-# 查看错误日志
+# Просмотр логов ошибок
 docker logs ntrip-caster
 
-# 检查端口占用
+# Проверка использования портов
 netstat -tlnp | grep :2101
 netstat -tlnp | grep :5757
 ```
 
-### Q2: 无法访问 Web 界面
+### Q2: Нет доступа к веб-интерфейсу
 
-**检查项：**
-1. 确认容器正在运行：`docker ps`
-2. 确认端口映射正确：`docker port ntrip-caster`
-3. 检查防火墙设置
-4. 确认配置文件中的端口设置
+**Проверка:**
+1. Убедиться, что контейнер запущен: `docker ps`
+2. Убедиться, что маппинг портов правильный: `docker port ntrip-caster`
+3. Проверить настройки файрвола
+4. Убедиться в настройках портов в конфигурационном файле
 
-### Q3: NTRIP 客户端无法连接
+### Q3: NTRIP-клиент не может подключиться
 
-**检查项：**
-1. 确认 NTRIP 端口 2101 已开放
-2. 检查挂载点是否正确创建
-3. 验证用户名和密码
-4. 查看服务器日志
+**Проверка:**
+1. Убедиться, что порт NTRIP 2101 открыт
+2. Проверить, правильно ли создана точка монтирования
+3. Проверить имя пользователя и пароль
+4. Просмотреть логи сервера
 
-### Q4: 数据持久化问题
+### Q4: Проблемы с сохранением данных
 
-**解决方案：**
+**Решение:**
 ```bash
-# 确保数据卷正确挂载
+# Убедиться, что том данных правильно подключен
 docker inspect ntrip-caster | grep Mounts -A 20
 
-# 检查目录权限
+# Проверить права доступа к каталогу
 ls -la data/
 sudo chown -R 1000:1000 data/
 ```
 
-## 高级配置
+## Расширенная конфигурация
 
-### 1. 使用 Docker Compose
+### 1. Использование Docker Compose
 
-创建 `docker-compose.yml` 文件：
+Создание файла `docker-compose.yml`:
 
 ```yaml
 version: '3.8'
@@ -349,7 +349,7 @@ services:
       retries: 3
       start_period: 90s
 
-  # 可选：添加 Nginx 反向代理
+  # Опционально: добавление обратного прокси Nginx
   nginx:
     image: nginx:alpine
     container_name: ntrip-nginx
@@ -364,93 +364,93 @@ services:
       - ntrip-caster
 ```
 
-启动服务：
+Запуск службы:
 ```bash
 docker-compose up -d
 ```
 
-### 2. 生产环境部署
+### 2. Развертывание в production-среде
 
-#### 使用 SSL/TLS
+#### Использование SSL/TLS
 
-1. 准备 SSL 证书
-2. 配置 Nginx 反向代理
-3. 更新防火墙规则
+1. Подготовка SSL-сертификата
+2. Настройка обратного прокси Nginx
+3. Обновление правил файрвола
 
-#### 监控和日志
+#### Мониторинг и логирование
 
 ```bash
-# 设置日志轮转
+# Настройка ротации логов
 docker run -d \
   --name ntrip-caster \
   --log-driver json-file \
   --log-opt max-size=10m \
   --log-opt max-file=3 \
-  # ... 其他参数
+  # ... другие параметры
 ```
 
-### 3. 备份和恢复
+### 3. Резервное копирование и восстановление
 
-#### 备份数据
+#### Резервное копирование данных
 ```bash
-# 备份数据目录
+# Резервное копирование каталога данных
 tar -czf ntrip-backup-$(date +%Y%m%d).tar.gz data/
 
-# 备份数据库
+# Резервное копирование базы данных
 docker exec ntrip-caster sqlite3 /app/data/2rtk.db ".backup /app/data/backup.db"
 ```
 
-#### 恢复数据
+#### Восстановление данных
 ```bash
-# 停止容器
+# Остановка контейнера
 docker stop ntrip-caster
 
-# 恢复数据
+# Восстановление данных
 tar -xzf ntrip-backup-20231201.tar.gz
 
-# 重启容器
+# Перезапуск контейнера
 docker start ntrip-caster
 ```
 
-### 4. 性能优化
+### 4. Оптимизация производительности
 
-#### 资源限制
+#### Ограничение ресурсов
 ```bash
 docker run -d \
   --name ntrip-caster \
   --memory=512m \
   --cpus=1.0 \
-  # ... 其他参数
+  # ... другие параметры
 ```
 
-#### 网络优化
+#### Оптимизация сети
 ```bash
-# 创建自定义网络
+# Создание пользовательской сети
 docker network create ntrip-network
 
-# 使用自定义网络
+# Использование пользовательской сети
 docker run -d \
   --name ntrip-caster \
   --network ntrip-network \
-  # ... 其他参数
+  # ... другие параметры
 ```
 
-## 更新和维护
+## Обновление и обслуживание
 
-### 更新到新版本
+### Обновление до новой версии
 
 ```bash
-# 1. 备份数据
+# 1. Резервное копирование данных
 tar -czf backup-$(date +%Y%m%d).tar.gz data/
 
-# 2. 停止并删除旧容器
+# 2. Остановка и удаление старого контейнера
 docker stop ntrip-caster
 docker rm ntrip-caster
 
-# 3. 拉取新镜像
+# 3. Загрузка нового образа
 docker pull 2rtk/ntripcaster:latest
 
-# 4. 启动新容器
+# 4. Запуск нового контейнера
 docker run -d \
   --name ntrip-caster \
   --restart unless-stopped \
@@ -462,27 +462,27 @@ docker run -d \
   2rtk/ntripcaster:latest
 ```
 
-### 健康检查
+### Проверка работоспособности
 
 ```bash
-# 检查容器健康状态
+# Проверка состояния работоспособности контейнера
 docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
 
-# 手动执行健康检查
+# Ручное выполнение проверки работоспособности
 docker exec ntrip-caster python /app/healthcheck.py
 ```
 
-## 技术支持
+## Техническая поддержка
 
-如果您在使用过程中遇到问题，可以：
+Если при использовании возникли проблемы, можно:
 
-1. 查看项目文档：[GitHub Repository](https://github.com/Rampump/NTRIPcaster)
-2. 提交 Issue：[GitHub Issues](https://github.com/Rampump/NTRIPcaster/issues)
-3. 联系作者：i@jia.by
-4. 访问官网：https://2rtk.com
+1. Просмотреть документацию проекта: [Репозиторий GitHub](https://github.com/srgizh/NTRIPcaster)
+2. Сообщить о проблеме: [Проблемы GitHub](https://github.com/srgizh/NTRIPcaster/issues)
+3. Связаться с автором: i@jia.by
+4. Посетить официальный сайт: https://2rtk.com
 
 ---
 
-**版本信息：** NTRIP Caster v2.2.0  
-**更新时间：** 2025年8月  
-**作者：** i@jia.by
+**Информация о версии:** NTRIP Caster v2.2.0  
+**Дата обновления:** Август 2025  
+**Автор:** i@jia.by

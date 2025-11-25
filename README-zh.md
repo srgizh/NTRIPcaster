@@ -1,8 +1,9 @@
 # 2RTK NTRIP Caster v2.2.0
 
 **Language / 语言选择:**
-- [English](README.md)
+- [English](README-en.md)
 - [中文版](#) (当前)
+- [Русский / Russian](README.md)
 
 ---
 
@@ -34,10 +35,12 @@ docker run -d \
 ```
 - **中文教程**: [Docker 安装和使用教程](DOCKER-TUTORIAL.md)
 - **English Tutorial**: [Docker Installation and Usage Guide](DOCKER-TUTORIAL-EN.md)
+- **Русский туториал / Russian Tutorial**: [Руководство по установке и использованию Docker](DOCKER-TUTORIAL.md)
 
 ### Debian系统原生安装
 - **中文教程**: [Linux 系统原生安装教程](INSTALL-TUTORIAL.md)
 - **English Tutorial**: [Linux Native Installation Guide](INSTALL-TUTORIAL-EN.md)
+- **Русский туториал / Russian Tutorial**: [Руководство по установке в Linux](INSTALL-TUTORIAL.md)
 
 **访问地址**:
 -  Web管理界面: `http://yourserverip:5757`
