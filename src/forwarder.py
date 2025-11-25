@@ -325,8 +325,8 @@ class SimpleDataForwarder:
             self.mount_buffers[mount].append(data_chunk, timestamp)
             buffer_size = len(self.mount_buffers[mount].buffer)
         
-        # Временно логируем получение данных, чтобы убедиться, что поток RTCM приходит стабильно
-        logger.log_info(f"Получены данные от точки монтирования {mount}: {len(data_chunk)} байт, размер буфера: {buffer_size}", 'ntrip')
+        # Логирование получения данных можно включить при необходимости:
+        # logger.log_debug(f"Получены данные от точки монтирования {mount}: {len(data_chunk)} байт, размер буфера: {buffer_size}", 'ntrip')
         
         self._send_to_subscribers(mount, data_chunk)
         
@@ -418,11 +418,8 @@ class SimpleDataForwarder:
                     self.stats['total_bytes_sent'] += bytes_sent
                     self.stats['total_messages_sent'] += len(new_data)
                     
-                    # Временно логируем отправку данных
-                    logger.log_info(
-                        f"Отправлено {bytes_sent} байт ({len(new_data)} сообщений) клиенту {client_info['user']}@{client_info['mount']} от {client_info['addr'][0]}",
-                        'ntrip'
-                    )
+                    # При необходимости можно включить подробное логирование отправок:
+                    # logger.log_debug(f"Отправлено {bytes_sent} байт ({len(new_data)} сообщений) клиенту {client_info['user']}@{client_info['mount']}", 'ntrip')
                     
                     if client_info.get('connection_id'):
                         # Тихие обновления активности пользователя, без генерации логов
